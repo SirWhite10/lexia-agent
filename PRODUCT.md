@@ -10,4 +10,6 @@ Lexia is a server-side SvelteKit agent harness. Jev makes the first typed routin
 - `src-tauri/` — Tauri desktop/mobile shell and native capabilities. Planned.
 - `app-data/releases/` — external immutable EVE releases for installed users. Not bundled into the Lexia executable.
 - `app-data/state/` — persistent Lexia and workflow state, separate from replaceable EVE releases.
+- `docs/planning/agent-capabilities-v1.md` — current planning baseline for intent plans, durable execution, and initial integrations; distinguishes selected scope from open provider validation.
+- `docs/planning/tickets/` — Wayfinder-style investigation, decision, prototype, and implementation tickets for planned agent capabilities.
 - `DESIGN.md` — current normative design-system baseline; once `spec.mdx`, `spec-config.ts`, and `spec:gen` exist, update it through those sources instead of editing it directly.
