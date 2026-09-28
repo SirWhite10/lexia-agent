@@ -77,8 +77,10 @@
 			<p class="eyebrow">STEP 1 OF 2</p>
 			<h1 id="onboarding-title">Name your workspace.</h1>
 			<p class="intro">Choose the username you’ll use to return to Lexia.</p>
-			<label>Username <input autocomplete="username" minlength="3" placeholder="your name" value={username || initialUsername} oninput={setUsername} /></label>
-			<button class="primary-button" type="button" onclick={continueSetup}>Continue <span aria-hidden="true">→</span></button>
+			<div class="stack">
+				<label>Username <input autocomplete="username" minlength="3" placeholder="your name" value={username || initialUsername} oninput={setUsername} /></label>
+				<button class="primary-button" type="button" onclick={continueSetup}>Continue <span aria-hidden="true">→</span></button>
+			</div>
 		{:else}
 			<button class="back-button" type="button" onclick={goBack}>← Back</button>
 			<p class="eyebrow">STEP 2 OF 2</p>
@@ -121,6 +123,8 @@
 	label { display: grid; gap: 0.45rem; color: var(--muted-foreground); font-size: 0.82rem; font-weight: 700; }
 	input { width: 100%; box-sizing: border-box; padding: 0.8rem 0.85rem; border: 1px solid var(--input); border-radius: 0.5rem; background: var(--background); color: var(--foreground); font: inherit; }
 	input:focus { border-color: var(--primary); outline: 2px solid color-mix(in oklch, var(--primary) 35%, transparent); }
+	.stack { display: grid; gap: 1rem; }
+	.stack .primary-button { margin-top: 0.5rem; }
 	form .primary-button { margin-top: 0.5rem; }
 	.error { margin: -0.75rem 0 1rem; color: var(--destructive); font-size: 0.85rem; }
 	.footer-note { margin: 3rem 0 0; color: var(--muted-foreground); font-size: 0.72rem; text-align: center; }

@@ -28,6 +28,22 @@
 - Use Git worktrees for agent coding tasks that need isolation. User-installed EVE updates use staged release folders, not worktrees.
 - Never activate an imported agent extension before validation, build, health check, and explicit acceptance.
 
+## Dev-only page instrumentation
+
+To inject test or diagnostic code into every dev page load — before hydration, at parse time — extend the `transformPageChunk` hook in `src/hooks.server.ts`:
+
+```ts
+transformPageChunk: ({ html }) =>
+	dev && injectMyScript ? html.replace('</head>', `<script>${myScript}</script>\n</head>`) : html,
+```
+
+Rules:
+
+- Keep the injected script as a plain-string module under `src/lib/dev/` (ES5 body, no template literals, no build step). It is inlined verbatim into an inline `<script>`; parse-time execution is the point — snippets pasted into the console arm too late to observe pre-hydration behavior.
+- Gate on `dev` from `$app/env` (Kit 3 renamed `$app/environment`; importing the old name fails `svelte-check`). Dead-branch elimination keeps the payload out of `bun run build` output — verify with a `grep` over the build artifacts after changing the gate.
+- Mute instrumentation with a `false` constant, never by deleting it: findings, reading guides, and the failure modes it uncovered belong in the module's comments so later testing concepts can reuse the recipe (see `src/lib/dev/sidebar-observer.ts` for the format: method notes, constraints, findings).
+- Log wall-clock `HH:MM:SS.mmm` plus a parse-relative `+Nms` offset on every line so output correlates with devtools Network/Performance while still measuring the window under test.
+
 ## Runtime decisions
 
 - Jev is the first routing gate. It may select a builtin action, tool/workflow, or EVE model route.

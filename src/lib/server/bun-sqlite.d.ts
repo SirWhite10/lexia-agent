@@ -4,13 +4,20 @@ declare module 'bun:sqlite' {
 		run(query: string): void;
 		query<T = unknown>(query: string): {
 			get(...params: unknown[]): T;
+			all(...params: unknown[]): T[];
 			run(...params: unknown[]): void;
 		};
 	}
 }
 
 declare module 'node:fs' {
+	export interface Dirent {
+		name: string;
+		isDirectory(): boolean;
+	}
+
 	export function mkdirSync(path: string, options?: { recursive?: boolean }): void;
+	export function readdirSync(path: string, options: { withFileTypes: true }): Dirent[];
 }
 
 declare module 'node:path' {
@@ -18,7 +25,7 @@ declare module 'node:path' {
 	export function resolve(...paths: string[]): string;
 }
 
-declare const process: { cwd(): string };
+declare const process: { cwd(): string; env: Record<string, string | undefined> };
 
 declare const Bun: {
 	password: {

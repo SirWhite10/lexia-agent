@@ -4,20 +4,21 @@
 	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "vite preview",
+		"dev": "bun --bun vite dev --host 0.0.0.0",
+		"build": "bun --bun vite build",
+		"preview": "bun run --bun vite preview --host",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test:unit": "bun test tests/",
 		"test:e2e": "playwright install && playwright test",
-		"test": "bun run test:e2e"
+		"test": "bun run test:unit && bun run test:e2e"
 	},
 	"devDependencies": {
 		"@internationalized/date": "^3.12.0",
 		"@lucide/svelte": "^1.47.0",
 		"@playwright/test": "^1.60.0",
-		"@sveltejs/adapter-auto": "^8.0.0-next.3",
+		"@sveltejs/adapter-bun": "1.0.0-next.2",
 		"@sveltejs/kit": "^3.0.0-next.0",
 		"@sveltejs/vite-plugin-svelte": "^7.2.0",
 		"@tailwindcss/vite": "^4.3.0",
