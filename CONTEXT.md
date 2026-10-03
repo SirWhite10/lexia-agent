@@ -70,23 +70,15 @@ _Avoid_: persona, profile, preferences.
 Soft removal: the entry leaves active lists but stays queryable; user data is never hard-deleted.
 _Avoid_: delete, remove.
 
-## Installed runtime
+## Agent runtime
 
-**EVE release**:
-An immutable, versioned directory containing an EVE source snapshot and its generated production runtime output.
-_Avoid_: live agent folder, mutable production agent.
+**agent project**:
+The EVE source tree the host runs with `eve dev` — `my-agent/` by default, `LEXIA_EVE_ROOT` overrides. It is edited in place and has no packaged or released form.
+_Avoid_: release, bundle, production agent, deployed agent.
 
-**active release**:
-The EVE release currently selected by Lexia to serve user requests.
-_Avoid_: latest release; a staged release is not active until promoted.
-
-**staged release**:
-An imported and validated EVE release that has not yet been promoted to serve traffic.
-_Avoid_: update branch, temporary worktree.
-
-**promotion**:
-The controlled transition that health-checks a staged release, makes it active, and restarts the EVE process.
-_Avoid_: hot patch.
+**agent source**:
+The authored content under the agent project's `agent/` directory: instructions, model configuration, channels, tools, skills, and subagents. Editing it changes agent behaviour on the next turn.
+_Avoid_: generated output, build artifact.
 
 ## Work execution
 

@@ -8,7 +8,7 @@ This document records the current direction for Lexia's intent planning, backgro
 
 Lexia is a self-hosted personal assistant and agent harness. It should grow through integrations, tools, skills, and user-approved memory while keeping execution and credentials on the server side. The chat interface is the primary control surface. A mobile presentation may offer a focused chat and shortcut view over the same conversations, actions, approvals, and background runs rather than a separate agent.
 
-Production users run EVE from an external release folder; the compiled Bun Lexia host remains stable. Jev remains the first typed routing gate and EVE remains the execution runtime, consistent with the project runtime decisions in `AGENTS.md` and `PRODUCT.md`.
+EVE runs from its authored source in development mode only, supervised by the host ([ADR 0003](../adr/0003-eve-development-runtime.md)); there is no packaged or production runtime for V1. Jev remains the first typed routing gate and EVE remains the execution runtime, consistent with the project runtime decisions in `AGENTS.md` and `PRODUCT.md`.
 
 ## Initial product scope
 
