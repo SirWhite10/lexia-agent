@@ -32,7 +32,6 @@ export const settingsItems: SectionItem[] = [
 	{ title: 'Integrations', href: '/settings/integrations' },
 	{ title: 'Accounts', href: '/settings/accounts' },
 	{ title: 'Models', href: '/settings/models' },
-	{ title: 'Releases', href: '/settings/releases' },
 ];
 
 /** Exact match at the root; sub-agent routes light up the Chat tab. */

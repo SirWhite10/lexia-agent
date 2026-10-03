@@ -4,12 +4,12 @@ import { getUser } from './lib/server/auth';
 import { startEveSupervisor } from './lib/server/eve-supervisor';
 import { sidebarObserverScript } from './lib/dev/sidebar-observer';
 
-// The host supervises EVE (ADR 0001). In development that means a single
-// `bun run dev` brings both processes up: the supervisor spawns `eve dev` and
-// restarts it if it dies, so the chat never has to ask the operator to babysit
-// a second terminal. Production supervises `eve start` against a promoted
-// release through the same seam.
-if (dev) startEveSupervisor();
+// The host supervises EVE on every boot (ADR 0003): the supervisor spawns
+// `eve dev` from the authored source tree and restarts it if it dies. The
+// gate that used to be `dev` only existed because a production build expected
+// an already-promoted release to be running; there is no release path, so
+// there is nothing to distinguish.
+startEveSupervisor();
 
 // MUTED — set to true to re-arm the sidebar trigger diagnostic.
 //

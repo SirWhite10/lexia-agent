@@ -79,8 +79,9 @@
 
 	{#if !data.eveUp}
 		<p class="rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
-			EVE is not running, so nothing can answer yet. Start it with
-			<code class="font-mono">cd my-agent && bunx eve dev</code> and send this again.
+			EVE is not answering, so nothing can reply yet. The host starts it automatically —
+			give it a moment, and check the server log for the <code class="font-mono">[eve]</code>
+			output if it stays down.
 		</p>
 	{/if}
 
