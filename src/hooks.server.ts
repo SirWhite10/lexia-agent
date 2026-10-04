@@ -3,17 +3,17 @@ import type { Handle } from '@sveltejs/kit/hooks';
 import { getUser } from './lib/server/auth';
 import { startEveSupervisor } from './lib/server/eve-supervisor';
 import { sidebarObserverScript } from './lib/dev/sidebar-observer';
-import { applyOpenRouterKey } from './lib/server/provider-key';
+import { applyProviderKeys } from './lib/server/provider-key';
 
 // The host supervises EVE on every boot (ADR 0003): the supervisor spawns
 // `eve dev` from the authored source tree and restarts it if it dies. The
 // gate that used to be `dev` only existed because a production build expected
 // an already-promoted release to be running; there is no release path, so
 // there is nothing to distinguish.
-// A key stored from Settings → Integrations has to be in the environment before
-// the supervisor spawns: EVE inherits this environment once and reads the key
-// at module load.
-applyOpenRouterKey();
+// Every stored provider key has to be in the environment before the supervisor
+// spawns: EVE inherits this environment once and reads the credential at
+// module load.
+applyProviderKeys();
 startEveSupervisor();
 
 // MUTED — set to true to re-arm the sidebar trigger diagnostic.

@@ -3,93 +3,89 @@ import { existsSync, mkdtempSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-// provider-key.ts reads LEXIA_STATE_DIR when the module loads and captures the
-// boot-time OPENROUTER_API_KEY once, on globalThis. Dynamic import exception:
-// both must be in place before the module is evaluated.
-const workspace = mkdtempSync(join(tmpdir(), 'lexosa-key-test-'));
+// provider-key.ts resolves its state directory when the module loads and
+// captures the boot environment once, on globalThis. The temp directory must
+// exist before the import, and the boot-environment case has to run in its own
+// process because that capture cannot be repeated.
+const workspace = mkdtempSync(join(tmpdir(), 'lexosa-keys-test-'));
 process.env.LEXIA_STATE_DIR = workspace;
-delete process.env.OPENROUTER_API_KEY;
+delete process.env.OPENAI_API_KEY;
 const keys = await import('../src/lib/server/provider-key.js');
 
-const keyFile = join(workspace, 'openrouter.key');
+const MODULE = new URL('../src/lib/server/provider-key.ts', import.meta.url).pathname;
 
 afterAll(() => {
-	delete process.env.OPENROUTER_API_KEY;
 	rmSync(workspace, { recursive: true, force: true });
 });
 
-// The precedence decision is captured once per process, so the cases that need
-// a host which booted with an environment key run in a child process with the
-// variable set. Everything else shares this process's store-owned environment.
-describe('a store-owned OpenRouter key', () => {
-	test('is reported as nothing on a fresh workspace', () => {
-		expect(keys.openRouterKeySource()).toBe('none');
+/** Runs a snippet in a child process so boot-time environment capture is real. */
+async function inChild(env: Record<string, string>, body: string): Promise<string> {
+	const child = Bun.spawn(['bun', '-e', body], {
+		env: { ...process.env, ...env },
+		stdout: 'pipe',
+		stderr: 'pipe'
+	});
+	const out = (await new Response(child.stdout).text()).trim();
+	const code = await child.exited;
+	if (code !== 0) throw new Error(await new Response(child.stderr).text());
+	return out;
+}
 
-		keys.applyOpenRouterKey();
-
-		expect(process.env.OPENROUTER_API_KEY).toBeUndefined();
+describe('provider keys', () => {
+	test('a fresh workspace has none', () => {
+		expect(keys.providerKeySource('openrouter')).toBe('none');
+		expect(keys.storedProviderKey('openrouter')).toBeNull();
 	});
 
-	test('reaches the environment on boot and is reported as stored', () => {
-		expect(keys.saveOpenRouterKey('from-browser')).toBe(true);
+	test('are written per provider, owner-readable only', () => {
+		expect(keys.saveProviderKey('openrouter', 'or-key')).toBe(true);
+		expect(keys.saveProviderKey('higgsfield', 'hf-key')).toBe(true);
 
-		keys.applyOpenRouterKey();
-
-		expect(process.env.OPENROUTER_API_KEY).toBe('from-browser');
-		expect(keys.storedOpenRouterKey()).toBe('from-browser');
-		expect(keys.openRouterKeySource()).toBe('stored');
+		expect(keys.storedProviderKey('openrouter')).toBe('or-key');
+		expect(keys.storedProviderKey('higgsfield')).toBe('hf-key');
+		expect(statSync(join(workspace, 'openrouter.key')).mode & 0o777).toBe(0o600);
+		expect(statSync(join(workspace, 'higgsfield.key')).mode & 0o777).toBe(0o600);
 	});
 
-	test('is written readable only by its owner', () => {
-		expect(statSync(keyFile).mode & 0o777).toBe(0o600);
+	test('one provider never answers for another', () => {
+		expect(keys.providerKey('openai')).toBeNull();
+		expect(keys.providerKey('higgsfield')).toBe('hf-key');
+		expect(() => keys.providerKey('nope')).toThrow(/Unknown provider/);
 	});
 
-	test('is replaced in place, and the change is reported as live', () => {
-		expect(keys.saveOpenRouterKey('replacement-key')).toBe(true);
+	test('removing one key leaves the others alone', () => {
+		expect(keys.saveProviderKey('openrouter', '')).toBe(true);
 
-		expect(keys.storedOpenRouterKey()).toBe('replacement-key');
-		expect(process.env.OPENROUTER_API_KEY).toBe('replacement-key');
-		expect(keys.openRouterKeySource()).toBe('stored');
-		expect(statSync(keyFile).mode & 0o777).toBe(0o600);
+		expect(existsSync(join(workspace, 'openrouter.key'))).toBe(false);
+		expect(keys.storedProviderKey('higgsfield')).toBe('hf-key');
+		expect(keys.providerKeySource('openrouter')).toBe('none');
 	});
 
-	test('is removed when the field is submitted empty', () => {
-		expect(keys.saveOpenRouterKey('   ')).toBe(true);
+	test('a stored key reaches the environment on boot', () => {
+		keys.applyProviderKeys();
 
-		expect(existsSync(keyFile)).toBe(false);
-		expect(process.env.OPENROUTER_API_KEY).toBeUndefined();
-		expect(keys.openRouterKeySource()).toBe('none');
+		expect(process.env.HIGGSFIELD_API_KEY).toBe('hf-key');
+		expect(keys.providerKeySource('higgsfield')).toBe('stored');
 	});
-});
 
-describe('a host that booted with OPENROUTER_API_KEY', () => {
-	test('keeps the environment key and ignores a saved one', async () => {
-		const script = `
-			import { existsSync, writeFileSync } from 'node:fs';
-			import { join } from 'node:path';
-			writeFileSync(join(process.env.LEXIA_STATE_DIR, 'openrouter.key'), 'stored-key\\n');
-			const keys = await import(${JSON.stringify(new URL('../src/lib/server/provider-key.ts', import.meta.url).pathname)});
-			const before = keys.openRouterKeySource();
-			keys.applyOpenRouterKey();
-			const changed = keys.saveOpenRouterKey('browser-key');
-			console.log(JSON.stringify({
-				source: before,
-				live: process.env.OPENROUTER_API_KEY,
-				changed,
-				file: existsSync(join(process.env.LEXIA_STATE_DIR, 'openrouter.key'))
-			}));
-		`;
+	test('a key the host booted with wins over a saved one', async () => {
+		const output = await inChild(
+			{ LEXIA_STATE_DIR: workspace, OPENAI_API_KEY: 'from-the-shell' },
+			`const keys = await import(${JSON.stringify(MODULE)});
+			 const changed = keys.saveProviderKey('openai', 'from-the-browser');
+			 console.log(JSON.stringify({
+				 changed,
+				 source: keys.providerKeySource('openai'),
+				 live: keys.providerKey('openai'),
+				 stored: keys.storedProviderKey('openai')
+			 }));`
+		);
 
-		const child = Bun.spawn(['bun', '-e', script], {
-			env: { ...process.env, LEXIA_STATE_DIR: workspace, OPENROUTER_API_KEY: 'operator-key' },
-			stdout: 'pipe'
+		expect(JSON.parse(output)).toEqual({
+			changed: false,
+			source: 'environment',
+			live: 'from-the-shell',
+			stored: 'from-the-browser'
 		});
-		const output = JSON.parse((await new Response(child.stdout).text()).trim());
-
-		expect(await child.exited).toBe(0);
-		expect(output.source).toBe('environment');
-		expect(output.live).toBe('operator-key');
-		expect(output.changed).toBe(false);
-		expect(output.file).toBe(true);
 	});
 });

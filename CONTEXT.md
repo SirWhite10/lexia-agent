@@ -12,8 +12,16 @@ _Avoid_: Alexia, Lexia, Lexia-Agent when referring to the product itself.
 The editable graph of questions Lexosa asks itself while routing a request, drawn at `/thinking`. Each node is a question, a route decision, or an action; its answers open the branch below. Edited by the operator, and later by the agent.
 _Avoid_: mind map, decision tree, flowchart.
 
+**provider**:
+An outside service Lexosa can be configured to call — OpenRouter, OpenAI, ElevenLabs, Deepgram, Stability AI, Runway. Each has exactly one credential, held in Settings → Providers, and declares the modalities it serves.
+_Avoid_: integration, connector, vendor, channel.
+
+**modality**:
+The kind of work a model does: text, spoken replies, transcriptions, images, or video. Every use-case belongs to one modality, which is what decides which providers and models may be assigned to it.
+_Avoid_: capability, media type, content type.
+
 **use case**:
-A named job a model is chosen for — Always, Quick answers, Research and search, Heavy work, or one the operator adds. The fallback is Always; anything unset falls through to it.
+A named job a model is chosen for — Always, Quick answers, Research and search, Heavy work, Spoken replies, Transcriptions, Images, Video, or one the operator adds. The fallback is Always; anything unset falls through to it. An assignment names a model and the provider that serves it.
 _Avoid_: tier, mode, persona.
 
 **attachment**:

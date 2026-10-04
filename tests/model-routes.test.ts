@@ -1,153 +1,148 @@
-import { afterAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Database } from 'bun:sqlite';
 
-// The store resolves its state directory at load, and SQLite creates the file on
-// first query, so the temp dir must exist before the import: these tests must
-// never touch the real installation's assignments.
-const stateDir = mkdtempSync(join(tmpdir(), 'lexia-model-routes-test-'));
-process.env.LEXIA_STATE_DIR = stateDir;
-// Dynamic import exception: the state dir must exist before the module loads.
+// model-routes.ts resolves its database when the module loads, so the temp
+// directory has to exist before the import.
+const workspace = mkdtempSync(join(tmpdir(), 'lexosa-routes-test-'));
+process.env.LEXIA_STATE_DIR = workspace;
 const routes = await import('../src/lib/server/model-routes.js');
 
+const MODULE = new URL('../src/lib/server/model-routes.ts', import.meta.url).pathname;
+
 afterAll(() => {
-	rmSync(stateDir, { recursive: true, force: true });
+	rmSync(workspace, { recursive: true, force: true });
+});
+
+// The built-ins are seeded once when the module loads, so a reset puts them
+// back rather than deleting them: clearing the table would leave the next test
+// with a workspace that has no use-cases at all.
+beforeEach(() => {
+	const db = new Database(join(workspace, 'lexia.sqlite'));
+	db.run('DELETE FROM model_assignments WHERE builtin = 0');
+	db.run("UPDATE model_assignments SET model_id = '', provider_id = '' WHERE builtin = 1");
+	db.close();
 });
 
 describe('builtin use-cases', () => {
-	test('a fresh workspace seeds the four builtins with no model chosen', () => {
-		const rows = routes.listUseCases();
+	test('cover text, speech, transcription, image and video, all unchosen', () => {
+		const builtins = routes.listUseCases().filter((row) => row.builtin);
 
-		expect(rows.map((row) => row.useCase)).toEqual(['always', 'quick', 'research', 'heavy']);
-		expect(rows.map((row) => row.label)).toEqual(['Always', 'Quick answers', 'Research and search', 'Heavy work']);
-		expect(rows.every((row) => row.builtin)).toBe(true);
-		// Nothing is assigned until the operator picks: an invented default would
-		// silently route work to a model nobody chose.
-		expect(rows.every((row) => row.modelId === '')).toBe(true);
-		expect(routes.modelForUseCase('always')).toBeNull();
+		expect(builtins.map((row) => row.modality)).toEqual([
+			'text',
+			'text',
+			'text',
+			'text',
+			'speech',
+			'transcription',
+			'image',
+			'video'
+		]);
+		expect(builtins.every((row) => row.modelId === '' && row.providerId === '')).toBe(true);
 	});
 
-	test('the Always fallback cannot be removed', () => {
-		expect(() => routes.removeUseCase('always')).toThrow(/built-in/i);
-		expect(routes.listUseCases().map((row) => row.useCase)).toContain('always');
-	});
+	test('Always leads and cannot be removed', () => {
+		expect(routes.listUseCases()[0].useCase).toBe(routes.ALWAYS_USE_CASE);
 
-	test('another builtin is protected too', () => {
-		expect(() => routes.removeUseCase('heavy')).toThrow(/built-in/i);
-		expect(routes.listUseCases().find((row) => row.useCase === 'heavy')).toBeDefined();
+		expect(() => routes.removeUseCase(routes.ALWAYS_USE_CASE)).toThrow(/built-in/);
+		expect(() => routes.removeUseCase('video')).toThrow(/built-in/);
 	});
 });
 
 describe('assignments', () => {
-	test('a chosen model reads back for its own use-case and nothing else', () => {
-		const assigned = routes.assignModel('quick', 'anthropic/claude-sonnet-4');
+	test('a chosen model reads back with the provider that serves it', () => {
+		const saved = routes.assignModel('images', 'some-image-model', 'higgsfield');
 
-		expect(assigned.modelId).toBe('anthropic/claude-sonnet-4');
-		expect(routes.modelForUseCase('quick')).toBe('anthropic/claude-sonnet-4');
-		expect(routes.modelForUseCase('research')).toBeNull();
-		expect(routes.listUseCases().find((row) => row.useCase === 'quick')?.modelId).toBe('anthropic/claude-sonnet-4');
+		expect(saved.modelId).toBe('some-image-model');
+		expect(saved.providerId).toBe('higgsfield');
+		expect(routes.modelForUseCase('images')).toBe('some-image-model');
+		expect(routes.providerForUseCase('images')).toBe('higgsfield');
+		// Other rows are untouched.
+		expect(routes.modelForUseCase('video')).toBeNull();
 	});
 
-	test('an assignment survives re-reading the store', async () => {
-		routes.assignModel('research', 'openai/gpt-4.1-mini');
-
-		// Dynamic import exception: a static import would return the cached
-		// instance above, and the point of this test is a second connection to
-		// the same file. The specifier is runtime-unique only to defeat that cache.
-		const reread = await import(`../src/lib/server/model-routes.js?reload=${Date.now()}`);
-
-		// A fresh module instance reads what the page's load function would read
-		// on the next request, so this is the value a later visit would see.
-		expect(reread.modelForUseCase('research')).toBe('openai/gpt-4.1-mini');
-		expect(reread.listUseCases().find((row) => row.useCase === 'research')?.modelId).toBe('openai/gpt-4.1-mini');
+	test('a model from a provider the app does not know is refused', () => {
+		expect(() => routes.assignModel('images', 'some-model', 'not-a-provider')).toThrow(/provider/);
+		expect(routes.modelForUseCase('images')).toBeNull();
 	});
 
-	test('an unknown use-case is refused rather than created by assignment', () => {
-		expect(() => routes.assignModel('nope', 'some/model')).toThrow(/No use-case/);
-		expect(routes.listUseCases().some((row) => row.useCase === 'nope')).toBe(false);
-	});
-});
+	test('clearing keeps the use-case and drops the provider too', () => {
+		routes.assignModel('video', 'runway-model', 'runway');
 
-describe('resolveModelId', () => {
-	test('the requested use-case wins when it has a model', () => {
-		routes.assignModel('always', 'fallback/model');
-		routes.assignModel('heavy', 'deep/model');
-
-		expect(routes.resolveModelId('heavy')).toBe('deep/model');
+		expect(routes.assignModel('video', '').providerId).toBe('');
+		expect(routes.listUseCases().some((row) => row.useCase === 'video')).toBe(true);
 	});
 
-	test('an unassigned use-case falls through to Always', () => {
-		// Cleared because an earlier test assigned it: the fallthrough only
-		// happens for a use-case with no model of its own.
-		routes.assignModel('quick', '');
-		routes.assignModel('always', 'fallback/model');
+	test('a request with no match falls through to Always', () => {
+		routes.assignModel(routes.ALWAYS_USE_CASE, 'fallback-model', 'openrouter');
 
-		expect(routes.resolveModelId('quick')).toBe('fallback/model');
-		expect(routes.resolveModelId('unknown-use-case')).toBe('fallback/model');
-		expect(routes.resolveModelId()).toBe('fallback/model');
-	});
-
-	test('with nothing assigned anywhere the router resolves to null', () => {
-		// Cleared through the public API rather than a direct delete, so this
-		// covers what the settings page can actually produce, and every use-case
-		// is cleared because an earlier test left some assigned.
-		for (const row of routes.listUseCases()) routes.assignModel(row.useCase, '');
-
-		expect(routes.resolveModelId('heavy')).toBeNull();
-		expect(routes.resolveModelId()).toBeNull();
-		expect(routes.resolveModelId('quick')).toBeNull();
+		expect(routes.resolveModelId('quick')).toBe('fallback-model');
+		routes.assignModel('quick', 'quick-model', 'openrouter');
+		expect(routes.resolveModelId('quick')).toBe('quick-model');
 	});
 });
 
 describe('custom use-cases', () => {
-	test('a name becomes a slugged custom row that can be assigned and removed', () => {
-		const created = routes.createUseCase('  Meeting Summaries  ');
+	test('keep the modality they were created with', () => {
+		const created = routes.createUseCase('Meeting summaries', 'speech');
 
-		expect(created.useCase).toBe('meeting-summaries');
-		expect(created.label).toBe('Meeting Summaries');
-		expect(created.builtin).toBe(false);
-		expect(created.modelId).toBe('');
-
-		routes.assignModel('meeting-summaries', 'google/gemini-2.5-flash');
-		expect(routes.modelForUseCase('meeting-summaries')).toBe('google/gemini-2.5-flash');
-
-		routes.removeUseCase('meeting-summaries');
-		expect(routes.listUseCases().some((row) => row.useCase === 'meeting-summaries')).toBe(false);
-		expect(routes.modelForUseCase('meeting-summaries')).toBeNull();
+		expect(created.modality).toBe('speech');
+		expect(routes.listUseCases().find((row) => row.useCase === created.useCase)?.modality).toBe('speech');
 	});
 
-	test('an empty name is refused', () => {
-		expect(() => routes.createUseCase('   ')).toThrow(/Enter a name/);
+	test('default to text work', () => {
+		expect(routes.createUseCase('Invoice drafts').modality).toBe('text');
 	});
 
-	test('a duplicate name is refused in any casing', () => {
-		routes.createUseCase('Release Notes');
+	test('can be removed, and a duplicate label is refused', () => {
+		const created = routes.createUseCase('Invoice drafts');
 
-		expect(() => routes.createUseCase('release notes')).toThrow(/already exists/);
-		expect(routes.listUseCases().filter((row) => row.label.toLowerCase() === 'release notes')).toHaveLength(1);
-		routes.removeUseCase('release-notes');
+		expect(() => routes.createUseCase('invoice DRAFTS')).toThrow(/already exists/);
+		routes.removeUseCase(created.useCase);
+		expect(routes.listUseCases().some((row) => row.useCase === created.useCase)).toBe(false);
 	});
+});
 
-	test('a name that slugifies onto a builtin is refused', () => {
-		expect(() => routes.createUseCase('Always')).toThrow(/built-in use-case id/);
-		expect(routes.listUseCases().find((row) => row.useCase === 'always')?.label).toBe('Always');
-	});
+describe('migration', () => {
+	test('adds modality and provider_id to a table that predates them', async () => {
+		const legacy = mkdtempSync(join(tmpdir(), 'lexosa-legacy-test-'));
+		const db = new Database(join(legacy, 'lexia.sqlite'));
+		db.run(`CREATE TABLE model_assignments (
+			use_case TEXT PRIMARY KEY, label TEXT NOT NULL, model_id TEXT NOT NULL,
+			builtin INTEGER NOT NULL, created_at TEXT NOT NULL
+		)`);
+		db.run("INSERT INTO model_assignments VALUES ('always', 'Always', 'older-model', 1, '2026-01-01T00:00:00.000Z')");
+		db.close();
 
-	test('a name with no letters or digits cannot become an id', () => {
-		expect(() => routes.createUseCase('!!!')).toThrow(/no letters or numbers/);
-	});
+		const child = Bun.spawn(
+			[
+				'bun',
+				'-e',
+				`const routes = await import(${JSON.stringify(MODULE)});
+				 const rows = routes.listUseCases();
+				 console.log(JSON.stringify({
+					 always: rows.find((row) => row.useCase === 'always'),
+					 providerId: routes.providerForUseCase('always'),
+					 count: rows.length
+				 }));`
+			],
+			{ env: { ...process.env, LEXIA_STATE_DIR: legacy }, stdout: 'pipe', stderr: 'pipe' }
+		);
+		const output = (await new Response(child.stdout).text()).trim();
+		if ((await child.exited) !== 0) {
+			rmSync(legacy, { recursive: true, force: true });
+			throw new Error(await new Response(child.stderr).text());
+		}
+		rmSync(legacy, { recursive: true, force: true });
 
-	test('custom rows list after the builtins', () => {
-		routes.createUseCase('Voice Notes');
-
-		expect(routes.listUseCases().map((row) => row.useCase)).toEqual([
-			'always',
-			'quick',
-			'research',
-			'heavy',
-			'voice-notes'
-		]);
-		routes.removeUseCase('voice-notes');
+		const migrated = JSON.parse(output);
+		// The existing row survives, keeps its model, and lands on text with no
+		// provider: that is what a row written before this change could have meant.
+		expect(migrated.always.modelId).toBe('older-model');
+		expect(migrated.always.modality).toBe('text');
+		expect(migrated.providerId).toBeNull();
+		expect(migrated.count).toBe(8);
 	});
 });

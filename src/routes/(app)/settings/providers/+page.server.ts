@@ -1,28 +1,49 @@
-import type { Actions, PageServerLoad } from './$types';
+import { fail } from '@sveltejs/kit';
 import { restartEve } from '#lib/server/eve-supervisor.js';
-import { openRouterKeySource, saveOpenRouterKey } from '#lib/server/provider-key.js';
+import { MODALITY_LABELS, PROVIDERS, providerById } from '#lib/server/provider-registry.js';
+import { providerKeySource, saveProviderKey } from '#lib/server/provider-key.js';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = () => {
-	const source = openRouterKeySource();
-	return {
-		openrouterConfigured: source !== 'none',
-		// Only ever the source, never any part of the key: the page promises the
-		// credential stays server-side.
-		openRouterKeySource: source
-	};
-};
+export const load: PageServerLoad = () => ({
+	// Only the source is ever returned. No part of a credential reaches the client,
+	// which is the promise this page and the key store both rest on.
+	providers: PROVIDERS.map((provider) => ({
+		id: provider.id,
+		label: provider.label,
+		envVar: provider.envVar,
+		summary: provider.summary,
+		modalities: provider.modalities.map((modality) => MODALITY_LABELS[modality]),
+		hasCatalogue: provider.catalogue !== null,
+		keySource: providerKeySource(provider.id)
+	}))
+});
 
 export const actions: Actions = {
 	saveKey: async ({ request }) => {
-		const apiKey = String((await request.formData()).get('apiKey') ?? '');
+		const form = await request.formData();
+		const provider = providerById(String(form.get('provider') ?? ''));
+		if (!provider) return fail(400, { provider: '', error: 'That provider is not one Lexosa knows.' });
 
-		// EVE read the credential once, at module load, and inherited this
-		// process's environment. A stored key — added or removed — is only live
-		// once EVE has restarted; an environment-provided key already reached
-		// EVE at spawn and must not disturb a running turn.
-		const eveRestarted = saveOpenRouterKey(apiKey);
-		if (eveRestarted) await restartEve();
+		const apiKey = String(form.get('apiKey') ?? '');
+		let changed = false;
+		try {
+			changed = saveProviderKey(provider.id, apiKey);
+		} catch (error) {
+			return fail(400, {
+				provider: provider.id,
+				error: error instanceof Error ? error.message : 'That key could not be saved.'
+			});
+		}
 
-		return { saved: true, source: openRouterKeySource(), eveRestarted };
+		// Only OpenRouter's credential reaches EVE, and only a live change is worth
+		// a restart: EVE captured the old one when it loaded.
+		const restarted = provider.id === 'openrouter' && changed;
+		if (restarted) await restartEve();
+
+		return {
+			provider: provider.id,
+			keySource: providerKeySource(provider.id),
+			restarted
+		};
 	}
 };
