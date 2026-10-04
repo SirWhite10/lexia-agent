@@ -7,7 +7,7 @@ status: complete
 
 ## Goal
 
-Record the canonical EVE directory layout so Lexia's mutable agent state (memory, personality, sub-agent prompts) can mirror it name-for-name instead of inventing folder names. Nothing on this installation defines it yet: `agent/` is planned in `PRODUCT.md`, `app-data/releases/` has no staged release, and the `eve` CLI is not installed here.
+Record the canonical EVE directory layout so Lexosa's mutable agent state (memory, personality, sub-agent prompts) can mirror it name-for-name instead of inventing folder names. Nothing on this installation defines it yet: `agent/` is planned in `PRODUCT.md`, `app-data/releases/` has no staged release, and the `eve` CLI is not installed here.
 
 ## Questions
 
@@ -58,7 +58,7 @@ Several separately addressable agents instead use `agents/<name>/agent/` — a w
 - **Immutable vs mutable.** Everything above is authored release content. It ships in the release folder and is immutable per ADR 0001.
 - **Memory has no authored home.** EVE does not store memory in the authored tree at all. A memory slot is code (`agent/memory/<slot>.ts`) that binds a *provider* to a scope; the provider decides storage, so memory lands in whatever backend the provider uses. Our `app-data/state/agent/…` mirror does not correspond to any EVE path.
 - **Personality has no EVE concept.** The personality block belongs to `instructions.md`, which is authored and immutable — so a personality that grows per user cannot live there.
-- **Sub-agent identity is the directory** `agent/subagents/<name>/`. EVE states specialists "do not inherit the parent's authored capabilities" and have no separate channel endpoint, which matches WF-DEC-002's model where Lexia authors each sub-agent's system prompt.
+- **Sub-agent identity is the directory** `agent/subagents/<name>/`. EVE states specialists "do not inherit the parent's authored capabilities" and have no separate channel endpoint, which matches WF-DEC-002's model where Lexosa authors each sub-agent's system prompt.
 
 ## Consequence for WF-DEC-002
 
@@ -66,5 +66,5 @@ The decision recorded memory as an EVE-style files-and-folders mirror under `app
 
 ## Follow-up
 
-- EVE ships a first-class memory-slot system whose recall/capture lifecycle is owned by the runtime. Re-decide whether Lexia keeps its own memory pipeline or implements EVE's `MemoryProvider` contract so EVE owns the turn lifecycle.
+- EVE ships a first-class memory-slot system whose recall/capture lifecycle is owned by the runtime. Re-decide whether Lexosa keeps its own memory pipeline or implements EVE's `MemoryProvider` contract so EVE owns the turn lifecycle.
 - EVE injects recalled content as **user-role messages attributed to the slot, never as system instructions**. WF-DEC-002 instead injects memory at the bottom of the system prompt for prompt-cache reuse. These are incompatible; the cache-first decision needs revisiting or an explicit override.

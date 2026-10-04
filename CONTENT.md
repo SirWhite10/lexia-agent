@@ -1,6 +1,6 @@
 # Content Router
 
-This area contains the language, product intent, design guidance, and prompt-facing material that agents use to understand Lexia.
+This area contains the language, product intent, design guidance, and prompt-facing material that agents use to understand Lexosa.
 
 - `CONTEXT.md` — canonical product glossary and domain language.
 - `DESIGN.md` — generated design tokens and visual guidance once the design source files exist.

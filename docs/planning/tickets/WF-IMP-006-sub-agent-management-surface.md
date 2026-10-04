@@ -7,7 +7,7 @@ status: implemented
 
 ## Goal
 
-Replace the chat-cards page with the sub-agent manager implied by the one-main-agent model: standing sub-agents with full role cards, Lexia-authored prompt versions, focus, lifecycle controls, and the agent-task history from the run model.
+Replace the chat-cards page with the sub-agent manager implied by the one-main-agent model: standing sub-agents with full role cards, Lexosa-authored prompt versions, focus, lifecycle controls, and the agent-task history from the run model.
 
 ## Depends on
 
@@ -19,7 +19,7 @@ Replace the chat-cards page with the sub-agent manager implied by the one-main-a
 
 - List standing sub-agents as role cards: name, focus, memory scope, capability allowlist, status, and current prompt version.
 - Edit a role card; revising the system prompt creates a new version, with prior versions viewable.
-- Spawn flow: Lexia authors the sub-agent's system prompt and role card; the host persists version 1.
+- Spawn flow: Lexosa authors the sub-agent's system prompt and role card; the host persists version 1.
 - Retire and archive controls; deletion everywhere archives rather than removes.
 - One-shot agent tasks rendered as history rows sourced from the run/action model (status, originating command, outcome).
 
@@ -40,7 +40,7 @@ Replace the chat-cards page with the sub-agent manager implied by the one-main-a
 
 All acceptance criteria are implemented and verified in the running app.
 
-- Role-card editing (focus, memory scope, capabilities), Lexia-authored prompt versioning with visible history, rename with Enter/✓/Esc and inline errors, retire, and archive — all persisted and confirmed through the browser.
+- Role-card editing (focus, memory scope, capabilities), Lexosa-authored prompt versioning with visible history, rename with Enter/✓/Esc and inline errors, retire, and archive — all persisted and confirmed through the browser.
 - **Agent-task history** now reads one-shot delegations from the run model added by [WF-IMP-001](WF-IMP-001-durable-intent-run-vertical-slice.md), with lifecycle status and outcome per task.
 - **The chat surface exists**: a turn becomes a run, and the delegation entry streams action-level progress over SSE. The capture half of the loop is live — every user message lands in the memory log on send.
 

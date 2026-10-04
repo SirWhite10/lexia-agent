@@ -7,11 +7,11 @@ status: complete
 
 ## Goal
 
-Replace the abandoned "many chats, many top-level sessions" model with one main agent, one massive chat, growing memory and personality, and Lexia-authored sub-agents — and settle how each is stored and injected so the prompt prefix stays cache-stable. The product framing is a Jarvis-like experience: the user talks to one main agent that spins up sub-agents for multitasking and parallel commands.
+Replace the abandoned "many chats, many top-level sessions" model with one main agent, one massive chat, growing memory and personality, and Lexosa-authored sub-agents — and settle how each is stored and injected so the prompt prefix stays cache-stable. The product framing is a Jarvis-like experience: the user talks to one main agent that spins up sub-agents for multitasking and parallel commands.
 
 ## Decision
 
-**Conversation.** One main agent (Lexia) and one massive chat per installation, single user; the `users` table remains authentication-only. ADR 0002's run/action contract is unchanged: a run references the originating user message. Sub-agent work surfaces in the chat as compact delegation entries, streamed progress, and summaries; full transcripts live in run detail.
+**Conversation.** One main agent (Lexosa) and one massive chat per installation, single user; the `users` table remains authentication-only. ADR 0002's run/action contract is unchanged: a run references the originating user message. Sub-agent work surfaces in the chat as compact delegation entries, streamed progress, and summaries; full transcripts live in run detail.
 
 **Memory.** The corpus is the verbatim user-message log (the `messages` table) plus distilled facts the agent maintains. Storage follows EVE's authored files-and-folders structure mirrored under the mutable home `app-data/state/agent/…`; facts and personality are human-editable markdown there, while `app-data/state/lexia.sqlite` holds the vector index and tags. Every vector row stores its embedding model id. Retrieval is vector search via OpenRouter embeddings (default `openai/text-embedding-3-small`), role-scoped for sub-agents, with an injection budget of roughly ten entries / 1.5k tokens.
 
@@ -21,7 +21,7 @@ Replace the abandoned "many chats, many top-level sessions" model with one main 
 
 **Prompt order.** The assembled system prompt is `[personality → all skills → retrieved memory → resolved tools]`. Everything above the memory block is byte-stable across turns; skills are always complete, never per-turn selected; personality rewrites are batched at boundaries so the cached prefix re-warms once per change. Jev classifies before capabilities are resolved and injected.
 
-**Sub-agents.** A *standing sub-agent* ("forever") is distinct from a one-shot *agent task* (dies with its run, auto-archives; standing sub-agents persist until explicitly retired). Lexia authors each sub-agent's system prompt at spawn and may revise it later, versioned, so "what did it run with?" is answerable. The role card is: authored system prompt + focus (its assignment) + memory scope + capability allowlist. Sub-agents run their own personality — derived from Lexia through Lexia's authored prompt — and receive role-scoped retrieval plus explicit hand-off notes. Sub-agents may message each other: commands are structured action requests in the action model, chat is plain text, and both are routed through the run coordinator. The main chat stays filtered to user↔Lexia plus delegation entries and summaries.
+**Sub-agents.** A *standing sub-agent* ("forever") is distinct from a one-shot *agent task* (dies with its run, auto-archives; standing sub-agents persist until explicitly retired). Lexosa authors each sub-agent's system prompt at spawn and may revise it later, versioned, so "what did it run with?" is answerable. The role card is: authored system prompt + focus (its assignment) + memory scope + capability allowlist. Sub-agents run their own personality — derived from Lexosa through Lexosa's authored prompt — and receive role-scoped retrieval plus explicit hand-off notes. Sub-agents may message each other: commands are structured action requests in the action model, chat is plain text, and both are routed through the run coordinator. The main chat stays filtered to user↔Lexosa plus delegation entries and summaries.
 
 **Surfaces.** The chat is home. `/agents` becomes sub-agent management: role cards, focus, standing/retired state, prompt versions, and agent-task history. Delete becomes archive everywhere.
 

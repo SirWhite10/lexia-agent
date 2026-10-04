@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import { Database } from 'bun:sqlite';
 
 // Conversation and sub-agent state (WF-IMP-003): messages in the massive chat
-// and standing sub-agents with versioned Lexia-authored prompts. The memory
+// and standing sub-agents with versioned Lexosa-authored prompts. The memory
 // corpus lives in memory.ts against the same state database. Same module
 // pattern as auth.ts (own connection per module).
 const stateDir = resolve(process.env.LEXIA_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
@@ -222,7 +222,7 @@ export function listSubAgentPromptVersions(id: string): SubAgentPromptVersion[] 
 		}));
 }
 
-/** Lexia authors the system prompt; the host persists it as version 1. */
+/** Lexosa authors the system prompt; the host persists it as version 1. */
 export function createSubAgent(input: {
 	name: string;
 	systemPrompt: string;

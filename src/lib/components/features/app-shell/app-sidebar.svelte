@@ -7,12 +7,19 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Sidebar from '#lib/components/ui/sidebar/index.js';
 	import type { SubAgent } from '#lib/server/agents.js';
+	import { sidebarPreferences } from '#lib/sidebar-preferences.svelte.js';
 	import { isNavActive, settingsItems, workflowsItem } from './nav-items.js';
 
 	let { subAgents }: { subAgents: SubAgent[] } = $props();
 
-	let subAgentsOpen = $state(true);
-	let settingsOpen = $state(true);
+	// Section state comes from the preference store so Settings → General can
+	// change it and so the sections a user opens survive a reload.
+	let subAgentsOpen = $derived(sidebarPreferences.open['sub-agents']);
+
+	// The settings section is the rail's footer, so it stays lit whenever any of
+	// its pages is open rather than only when General is the active one.
+	let settingsActive = $derived(settingsItems.some((item) => isNavActive(item, page.url.pathname)));
+	let settingsOpen = $derived(sidebarPreferences.open.settings);
 </script>
 
 {#snippet subAgentRows(list: SubAgent[])}
@@ -42,7 +49,7 @@
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton
 					size="lg"
-					tooltipContent="Lexia"
+					tooltipContent="Lexosa"
 					class="group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
 				>
 					{#snippet child({ props })}
@@ -51,7 +58,7 @@
 								class="grid size-6 shrink-0 place-items-center rounded-[min(var(--radius-md),10px)] bg-primary text-xs text-primary-foreground"
 								aria-hidden="true">✦</span
 							>
-							<span class="font-bold group-data-[collapsible=icon]:hidden">Lexia</span>
+							<span class="font-bold group-data-[collapsible=icon]:hidden">Lexosa</span>
 						</a>
 					{/snippet}
 				</Sidebar.MenuButton>
@@ -60,7 +67,7 @@
 	</Sidebar.Header>
 
 	<Sidebar.Content>
-		<!-- Sub-agents section: Lexia's standing sub-agents plus the manage and
+		<!-- Sub-agents section: Lexosa's standing sub-agents plus the manage and
 		     expand controls. The list mirrors the sub-agent area on /agents. -->
 		<Sidebar.Group>
 			<div
@@ -70,7 +77,7 @@
 					type="button"
 					class="flex-1 rounded-md px-1 py-1 text-left text-xs font-semibold tracking-wide text-muted-foreground hover:text-foreground"
 					aria-expanded={subAgentsOpen}
-					onclick={() => (subAgentsOpen = !subAgentsOpen)}
+					onclick={() => sidebarPreferences.toggle('sub-agents')}
 				>
 					Sub-agents
 				</button>
@@ -87,7 +94,7 @@
 					variant="ghost"
 					size="icon-sm"
 					aria-label={subAgentsOpen ? 'Collapse sub-agents section' : 'Expand sub-agents section'}
-					onclick={() => (subAgentsOpen = !subAgentsOpen)}
+					onclick={() => sidebarPreferences.toggle('sub-agents')}
 				>
 					{#if subAgentsOpen}
 						<ChevronUpIcon />
@@ -96,22 +103,20 @@
 					{/if}
 				</Button>
 			</div>
-			{#if subAgentsOpen}
-				<Sidebar.GroupContent>
-					<Sidebar.Menu class="gap-1.5 group-data-[collapsible=icon]:gap-1.5">
-						{@render subAgentRows(subAgents)}
-						{#if subAgents.length === 0}
-							<Sidebar.MenuItem>
-								<span
-									class="px-2 py-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden"
-								>
-									No sub-agents yet
-								</span>
-							</Sidebar.MenuItem>
-						{/if}
-					</Sidebar.Menu>
-				</Sidebar.GroupContent>
-			{/if}
+			<Sidebar.GroupContent class={subAgentsOpen ? undefined : 'hidden'}>
+				<Sidebar.Menu class="gap-1.5 group-data-[collapsible=icon]:gap-1.5">
+					{@render subAgentRows(subAgents)}
+					{#if subAgents.length === 0}
+						<Sidebar.MenuItem>
+							<span
+								class="px-2 py-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden"
+							>
+								No sub-agents yet
+							</span>
+						</Sidebar.MenuItem>
+					{/if}
+				</Sidebar.Menu>
+			</Sidebar.GroupContent>
 		</Sidebar.Group>
 
 		<Sidebar.Group>
@@ -119,7 +124,7 @@
 				<Sidebar.Menu class="gap-1.5 group-data-[collapsible=icon]:gap-1.5">
 					<Sidebar.MenuItem>
 						<Sidebar.MenuButton
-							isActive={isNavActive(workflowsItem.href, page.url.pathname)}
+							isActive={isNavActive(workflowsItem, page.url.pathname)}
 							tooltipContent={workflowsItem.title}
 							class="h-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
 						>
@@ -135,16 +140,23 @@
 			</Sidebar.GroupContent>
 		</Sidebar.Group>
 
-		<!-- Settings section: sub-sections stack under /settings. -->
+	</Sidebar.Content>
+
+	<!-- Settings lives in the footer: it is where the rail ends, not another
+	     destination competing with the work. -->
+	<Sidebar.Footer>
 		<Sidebar.Group>
 			<div
 				class="flex items-center gap-0.5 px-2 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0"
 			>
 				<button
 					type="button"
-					class="flex-1 rounded-md px-1 py-1 text-left text-xs font-semibold tracking-wide text-muted-foreground hover:text-foreground"
+					class="flex-1 rounded-md px-1 py-1 text-left text-xs font-semibold tracking-wide transition-colors hover:text-foreground {settingsActive
+						? 'bg-sidebar-accent text-sidebar-accent-foreground'
+						: 'text-muted-foreground'}"
 					aria-expanded={settingsOpen}
-					onclick={() => (settingsOpen = !settingsOpen)}
+					aria-current={settingsActive ? 'page' : undefined}
+					onclick={() => sidebarPreferences.toggle('settings')}
 				>
 					Settings
 				</button>
@@ -152,7 +164,7 @@
 					variant="ghost"
 					size="icon-sm"
 					aria-label={settingsOpen ? 'Collapse settings section' : 'Expand settings section'}
-					onclick={() => (settingsOpen = !settingsOpen)}
+					onclick={() => sidebarPreferences.toggle('settings')}
 				>
 					{#if settingsOpen}
 						<ChevronUpIcon />
@@ -161,26 +173,24 @@
 					{/if}
 				</Button>
 			</div>
-			{#if settingsOpen}
-				<Sidebar.GroupContent>
-					<Sidebar.Menu class="gap-1 group-data-[collapsible=icon]:gap-1">
-						<Sidebar.MenuItem>
-							<Sidebar.MenuSub>
-								{#each settingsItems as item (item.href)}
-									<Sidebar.MenuSubItem>
-										<Sidebar.MenuSubButton
-											href={item.href}
-											isActive={isNavActive(item.href, page.url.pathname)}
-										>
-											{item.title}
-										</Sidebar.MenuSubButton>
-									</Sidebar.MenuSubItem>
-								{/each}
-							</Sidebar.MenuSub>
-						</Sidebar.MenuItem>
-					</Sidebar.Menu>
-				</Sidebar.GroupContent>
-			{/if}
+			<Sidebar.GroupContent class={settingsOpen ? undefined : 'hidden'}>
+				<Sidebar.Menu class="gap-1 group-data-[collapsible=icon]:gap-1">
+					<Sidebar.MenuItem>
+						<Sidebar.MenuSub>
+							{#each settingsItems as item (item.href)}
+								<Sidebar.MenuSubItem>
+									<Sidebar.MenuSubButton
+										href={item.href}
+										isActive={isNavActive(item, page.url.pathname)}
+									>
+										{item.title}
+									</Sidebar.MenuSubButton>
+								</Sidebar.MenuSubItem>
+							{/each}
+						</Sidebar.MenuSub>
+					</Sidebar.MenuItem>
+				</Sidebar.Menu>
+			</Sidebar.GroupContent>
 		</Sidebar.Group>
-	</Sidebar.Content>
+	</Sidebar.Footer>
 </Sidebar.Root>

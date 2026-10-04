@@ -310,14 +310,14 @@ export function savePersonality(traits: string[]): string {
 		.map((trait) => trait.trim())
 		.filter((trait) => trait.length > 0)
 		.map((trait) => `- [${previous[trait] ?? stamp}] ${trait}`);
-	const file = ['# Lexia personality', '', ...lines, ''].join('\n');
+	const file = ['# Lexosa personality', '', ...lines, ''].join('\n');
 	writeFileSync(personalityPath, file, 'utf8');
 	return file;
 }
 
-const REFLECTION_SYSTEM = `You maintain Lexia's long-term memory. Reply with JSON only, no prose and no code fences:
-{"facts": [{"body": "one concise durable fact about the user or their world", "tags": ["comma","separated"]}], "traits": ["one personality trait Lexia has observed"]}
-Rules: facts are durable (preferences, facts about the user's home, work, people), never transient chit-chat, never secrets; reuse the wording of an existing fact when you revise it; traits are short lowercase phrases describing how Lexia should behave for this user.`;
+const REFLECTION_SYSTEM = `You maintain Lexosa's long-term memory. Reply with JSON only, no prose and no code fences:
+{"facts": [{"body": "one concise durable fact about the user or their world", "tags": ["comma","separated"]}], "traits": ["one personality trait Lexosa has observed"]}
+Rules: facts are durable (preferences, facts about the user's home, work, people), never transient chit-chat, never secrets; reuse the wording of an existing fact when you revise it; traits are short lowercase phrases describing how Lexosa should behave for this user.`;
 
 export type ReflectionResult = { facts: MemoryEntry[]; traits: string[]; file: string };
 

@@ -6,15 +6,15 @@
 
 ---
 
-# Lexia-Agent instructions
+# Lexosa instructions
 
 @RTK.md
 
 ## Project identity
 
-- Product and agent name: **Lexia**
-- Repository/project name: **Lexia-Agent**
-- Folder name: `alexia-bot` (historical; do not use it as the product name)
+- Product and agent name: **Lexosa**
+- Repository/project name: **Lexia-Agent** (the GitHub remote is unchanged)
+- Folder name: `Lexosa` (folder on disk; not the product name)
 
 ## Operating rules
 
@@ -59,7 +59,7 @@ Read the appropriate router first, then open only the file needed for the task:
 - [PRODUCT.md](./PRODUCT.md): product architecture, runtime boundaries, and major source areas.
 - [CONTENT.md](./CONTENT.md): domain language, product/design documentation, and prompt-facing content.
 - [OPERATIONS.md](./OPERATIONS.md): repository rules, workflows, and operational tooling.
-- [CONTEXT.md](./CONTEXT.md): canonical Lexia domain glossary.
+- [CONTEXT.md](./CONTEXT.md): canonical Lexosa domain glossary.
 - [docs/adr/](./docs/adr/): durable architectural decisions and their rationale.
 - [workflow/](./workflow/): repeatable workflows; read the workflow Markdown before its `scripts/` directory.
 

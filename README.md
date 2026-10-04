@@ -1,6 +1,6 @@
-# Lexia-Agent
+# Lexosa
 
-Lexia is a server-side SvelteKit agent harness for chat, coding, workflows, and tool-assisted work. Jev routes requests, EVE executes them, and OpenRouter provides the initial model pool.
+Lexosa is a server-side SvelteKit agent harness for chat, coding, workflows, and tool-assisted work. Jev routes requests, EVE executes them, and OpenRouter provides the initial model pool.
 
 ## Development
 

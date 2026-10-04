@@ -2,11 +2,11 @@
 
 Status: planning baseline, 2026-09-23
 
-This document records the current direction for Lexia's intent planning, background execution, and initial integration scope. It is a product/architecture plan, not an implementation specification. Items called out as open still need validation before implementation or release.
+This document records the current direction for Lexosa's intent planning, background execution, and initial integration scope. It is a product/architecture plan, not an implementation specification. Items called out as open still need validation before implementation or release.
 
 ## Product direction
 
-Lexia is a self-hosted personal assistant and agent harness. It should grow through integrations, tools, skills, and user-approved memory while keeping execution and credentials on the server side. The chat interface is the primary control surface. A mobile presentation may offer a focused chat and shortcut view over the same conversations, actions, approvals, and background runs rather than a separate agent.
+Lexosa is a self-hosted personal assistant and agent harness. It should grow through integrations, tools, skills, and user-approved memory while keeping execution and credentials on the server side. The chat interface is the primary control surface. A mobile presentation may offer a focused chat and shortcut view over the same conversations, actions, approvals, and background runs rather than a separate agent.
 
 EVE runs from its authored source in development mode only, supervised by the host ([ADR 0003](../adr/0003-eve-development-runtime.md)); there is no packaged or production runtime for V1. Jev remains the first typed routing gate and EVE remains the execution runtime, consistent with the project runtime decisions in `AGENTS.md` and `PRODUCT.md`.
 
@@ -14,7 +14,7 @@ EVE runs from its authored source in development mode only, supervised by the ho
 
 The current V1 planning choice is:
 
-- Internal Lexia chat as the only chat surface initially. External chat channels are deferred.
+- Internal Lexosa chat as the only chat surface initially. External chat channels are deferred.
 - Direct Google integrations for Gmail and Google Calendar.
 - Local computer and device actions, with Home Assistant as the smart-home integration boundary.
 - An optional agent-related virtual-card capability, isolated behind a payment integration and strict per-purchase controls. AgentCard.ai is a candidate for a personal pilot, subject to provider and terms validation.
@@ -36,7 +36,7 @@ An intent plan should represent:
 - Required inputs, connected accounts, permissions, and whether user approval is needed.
 - Current status, progress, structured result, errors, and next steps.
 
-Useful intent families include answering/research, retrieving/organizing information, creating/editing content, communicating, controlling local devices or apps, scheduling/monitoring, coding/delegation, managing Lexia (connections, skills, and memory), and purchases/payments. New skills and integrations add capabilities under these families; they should not require Jev to learn each vendor's API vocabulary.
+Useful intent families include answering/research, retrieving/organizing information, creating/editing content, communicating, controlling local devices or apps, scheduling/monitoring, coding/delegation, managing Lexosa (connections, skills, and memory), and purchases/payments. New skills and integrations add capabilities under these families; they should not require Jev to learn each vendor's API vocabulary.
 
 Clarification and approval should be scoped to the action that needs them. A clear independent action can proceed while another action waits for a missing detail or approval. Dependencies such as “send this after the coding run succeeds” must be represented explicitly.
 
@@ -51,7 +51,7 @@ The planned server-side flow is:
 5. EVE executes the selected builtin, integration, workflow, or agent task.
 6. Results and state transitions are persisted and surfaced to the chat UI; the coordinator summarizes partial or complete outcomes.
 
-The run coordinator, not an LLM turn or an EVE release, owns durable lifecycle state. The stable Lexia host owns run/action records and scheduling; EVE executes assigned actions and returns progress/results. A run references the originating user message and contains one or more actions. A coding action may contain child agent tasks, each with its own worker/worktree details.
+The run coordinator, not an LLM turn or an EVE release, owns durable lifecycle state. The stable Lexosa host owns run/action records and scheduling; EVE executes assigned actions and returns progress/results. A run references the originating user message and contains one or more actions. A coding action may contain child agent tasks, each with its own worker/worktree details.
 
 Persist each action transition and its event in the same database transaction. Keep an append-only event history for audit/replay alongside current run/action rows for efficient snapshots; this is not full event sourcing. Use the existing `app-data/state/lexia.sqlite` state boundary for the initial single-host coordinator. Each run event has a monotonically increasing sequence within that run. SSE replays events after the client's last event identifier; on a fresh connection, the client loads a snapshot with its latest sequence, then streams events after that cursor. SQLite remains authoritative if the browser disconnects or the SSE connection drops.
 
@@ -59,7 +59,7 @@ Use an explicit action lifecycle: `planned`, `waiting_for_input`, `waiting_for_a
 
 If a prerequisite fails or is cancelled, dependent actions are cancelled with a dependency-failure reason; continuing with a fallback requires an explicit plan branch or replanning. Parent status is `planning` while the plan is not committed, `active` while work can progress, `waiting` when progress requires input/approval/reconciliation, `succeeded` when all actions succeed, `failed` when all actions are terminal with no successes and at least one failure, `cancelled` when all actions are cancelled, and `partially_complete` when terminal outcomes are mixed. The coordinator records each execution attempt and fences worker reports by attempt/lease identity so late results from an expired attempt cannot overwrite newer state.
 
-On host startup, queued actions remain eligible for dispatch and approval/input waits remain pending. A running action has a renewable execution lease. If the lease expires after a crash, mark the action `needs_reconciliation`; do not blindly repeat an external side effect whose outcome is unknown. Retry automatically only when the capability provides an idempotency mechanism and the same idempotency key can be reused. Otherwise require reconciliation or user direction. This avoids claiming exactly-once delivery across external APIs, which Lexia cannot guarantee.
+On host startup, queued actions remain eligible for dispatch and approval/input waits remain pending. A running action has a renewable execution lease. If the lease expires after a crash, mark the action `needs_reconciliation`; do not blindly repeat an external side effect whose outcome is unknown. Retry automatically only when the capability provides an idempotency mechanism and the same idempotency key can be reused. Otherwise require reconciliation or user direction. This avoids claiming exactly-once delivery across external APIs, which Lexosa cannot guarantee.
 
 The run coordinator persists before notifying subscribers. An SSE reconnect uses the last delivered event sequence and replays later records from SQLite, so in-memory notifications are only a latency optimization. Store sanitized event/result data; never write model credentials, card credentials, or private chain-of-thought into the event log. A disconnected browser must not stop or erase background work.
 
@@ -88,7 +88,7 @@ Implement Gmail and Google Calendar as direct Google integrations first. Keep th
 
 Local computer capabilities execute through a server-side/local host boundary, never from browser code. Each operation should have a narrow schema and an explicit permission policy. Browser, file, shell, and desktop/device access are separate capabilities; avoid giving the model one unrestricted host-control tool.
 
-Home Assistant is the initial smart-home adapter so Lexia can address entities and services through one local control plane rather than implement individual device brands. Connection setup, token storage, network reachability, allowed entities/domains, and confirmation rules are open implementation details. Device actions should return the concrete entity and resulting state where available.
+Home Assistant is the initial smart-home adapter so Lexosa can address entities and services through one local control plane rather than implement individual device brands. Connection setup, token storage, network reachability, allowed entities/domains, and confirmation rules are open implementation details. Device actions should return the concrete entity and resulting state where available.
 
 ### Agent-related virtual card
 

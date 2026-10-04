@@ -1,12 +1,24 @@
-# Lexia Context
+# Lexosa Context
 
-This glossary defines the product-specific language used by Lexia and its agents. Use these terms consistently in code, tickets, documentation, and prompts.
+This glossary defines the product-specific language used by Lexosa and its agents. Use these terms consistently in code, tickets, documentation, and prompts.
 
 ## Product and runtime
 
-**Lexia**:
+**Lexosa**:
 The user-facing agent harness and the single main agent the user talks to; it coordinates routing, execution, tools, skills, workflows, sub-agents, and persistent memory.
-_Avoid_: Alexia, Lexia-Agent when referring to the product itself.
+_Avoid_: Alexia, Lexia, Lexia-Agent when referring to the product itself.
+
+**thought tree**:
+The editable graph of questions Lexosa asks itself while routing a request, drawn at `/thinking`. Each node is a question, a route decision, or an action; its answers open the branch below. Edited by the operator, and later by the agent.
+_Avoid_: mind map, decision tree, flowchart.
+
+**use case**:
+A named job a model is chosen for — Always, Quick answers, Research and search, Heavy work, or one the operator adds. The fallback is Always; anything unset falls through to it.
+_Avoid_: tier, mode, persona.
+
+**attachment**:
+A file or voice note sent with one chat message. Bytes are stored under the state directory and referenced from the message; the agent is told what arrived, not handed the contents.
+_Avoid_: upload batch, blob.
 
 **EVE runtime**:
 The server-side execution runtime that runs an agent turn, tools, workflows, skills, and model calls after routing.
@@ -39,7 +51,7 @@ _Avoid_: hard-coded model name when discussing routing policy.
 ## Conversation and memory
 
 **massive chat**:
-The single continuous conversation between the user and Lexia on this installation; it grows for the life of the install and is never split into separate chats.
+The single continuous conversation between the user and Lexosa on this installation; it grows for the life of the install and is never split into separate chats.
 _Avoid_: chat, session, thread when referring to the one conversation.
 
 **command**:
@@ -51,7 +63,7 @@ The compact record of a sub-agent's work shown in the massive chat — progress 
 _Avoid_: transcript, log.
 
 **memory**:
-Lexia's durable user-specific context carried across turns: the verbatim user-message log plus distilled facts.
+Lexosa's durable user-specific context carried across turns: the verbatim user-message log plus distilled facts.
 _Avoid_: conversation history, transcript, context window.
 
 **memory fact**:
@@ -59,11 +71,11 @@ A concise durable fact distilled from conversation and stored in memory, version
 _Avoid_: note, raw log, message.
 
 **reflection**:
-The turn-boundary step that distills memory facts and updates Lexia's personality.
+The turn-boundary step that distills memory facts and updates Lexosa's personality.
 _Avoid_: summarization, compaction.
 
 **personality**:
-Lexia's evolving set of timestamped traits, injected as a main block of its system prompt and updated by reflection.
+Lexosa's evolving set of timestamped traits, injected as a main block of its system prompt and updated by reflection.
 _Avoid_: persona, profile, preferences.
 
 **archive**:
@@ -95,7 +107,7 @@ A user-approved unit of coding, research, or operational work that may run in an
 _Avoid_: background job when user review and promotion are required.
 
 **sub-agent**:
-An agent Lexia delegates work to — either a standing sub-agent or a one-shot agent task.
+An agent Lexosa delegates work to — either a standing sub-agent or a one-shot agent task.
 _Avoid_: worker, helper, process.
 
 **standing sub-agent**:
@@ -103,7 +115,7 @@ A sub-agent with a role card and focus that persists across conversations until 
 _Avoid_: sub-process, session.
 
 **role card**:
-A standing sub-agent's identity record: its Lexia-authored system prompt, focus, memory scope, and capability allowlist.
+A standing sub-agent's identity record: its Lexosa-authored system prompt, focus, memory scope, and capability allowlist.
 _Avoid_: profile, config.
 
 **focus**:

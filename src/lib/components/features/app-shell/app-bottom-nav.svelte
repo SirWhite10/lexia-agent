@@ -10,7 +10,7 @@
 >
 	<ul class="grid grid-cols-3">
 		{#each primaryNav as item (item.href)}
-			{@const active = isNavActive(item.href, page.url.pathname)}
+			{@const active = isNavActive(item, page.url.pathname)}
 			<li>
 				<a
 					href={item.href}

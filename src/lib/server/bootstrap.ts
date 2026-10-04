@@ -62,7 +62,7 @@ export function renderInstructions(input: BootstrapInput): string {
 	const sections = [
 		'# Identity',
 		'',
-		`You are ${input.name.trim() || 'Lexia'}, a personal agent for this installation.`,
+		`You are ${input.name.trim() || 'Lexosa'}, a personal agent for this installation.`,
 		'',
 		input.purpose.trim() || 'You help with whatever the user asks.',
 		'',

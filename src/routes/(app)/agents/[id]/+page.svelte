@@ -23,8 +23,8 @@
 </script>
 
 <svelte:head>
-	<title>{sub.name} — Lexia</title>
-	<meta name="description" content="{sub.name} — standing sub-agent of Lexia" />
+	<title>{sub.name} — Lexosa</title>
+	<meta name="description" content="{sub.name} — standing sub-agent of Lexosa" />
 </svelte:head>
 
 <section class="mx-auto w-full max-w-2xl flex-1 space-y-4 px-5 py-6" aria-label="Sub-agent">

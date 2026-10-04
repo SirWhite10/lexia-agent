@@ -32,7 +32,7 @@ Replace the `agents` table (kind `chat`/`agent`, `parent_id`) with the schema [W
 ## Acceptance criteria
 
 - `bun run check` passes and no reference to `AgentNode` or the `agents` table remains anywhere in `src/`.
-- The data layer round-trips messages (user, Lexia, and addressed sub-agent entries), standing sub-agents, prompt versions, memory facts, and fact revisions.
+- The data layer round-trips messages (user, Lexosa, and addressed sub-agent entries), standing sub-agents, prompt versions, memory facts, and fact revisions.
 - Each memory fact row points at its markdown file inside the [WF-INV-001](WF-INV-001-eve-authored-structure-inventory.md) tree.
 - A prompt revision creates a new version rather than overwriting, and archived sub-agents remain queryable.
 - The existing scratch data (three rows) is gone and the app runs against the new schema.

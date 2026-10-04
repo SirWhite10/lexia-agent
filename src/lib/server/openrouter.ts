@@ -19,13 +19,57 @@ export class OpenRouterError extends Error {
 }
 
 /**
+ * The one authenticated request path: resolves the credential, bounds the wait,
+ * and translates every provider failure into the OpenRouterError wording the
+ * settings pages show. Callers only decode the body, so no caller can invent a
+ * different message for the same outage or leak a raw provider error.
+ */
+export async function openRouterFetch(url: string, init: RequestInit = {}, timeoutMs = 25_000): Promise<Response> {
+	const apiKey = process.env.OPENROUTER_API_KEY;
+	if (!apiKey) {
+		throw new OpenRouterError('OpenRouter is not configured on the Lexosa host.');
+	}
+
+	let response: Response;
+	try {
+		response = await fetch(url, {
+			...init,
+			cache: 'no-store',
+			signal: AbortSignal.timeout(timeoutMs),
+			headers: { Authorization: `Bearer ${apiKey}`, ...init.headers }
+		});
+	} catch (error) {
+		if (error instanceof DOMException && error.name === 'TimeoutError') {
+			throw new OpenRouterError(`OpenRouter did not respond within ${Math.round(timeoutMs / 1000)} seconds.`);
+		}
+		throw new OpenRouterError('Could not connect to OpenRouter. Check host network access and try again.');
+	}
+
+	if (!response.ok) {
+		if (response.status === 401 || response.status === 403) {
+			throw new OpenRouterError('OpenRouter rejected the API key. Check the host configuration.');
+		}
+		if (response.status === 402) {
+			throw new OpenRouterError('OpenRouter reports that this account has insufficient credits.');
+		}
+		if (response.status === 429) {
+			throw new OpenRouterError('OpenRouter rate-limited this request. Wait a moment and try again.');
+		}
+		throw new OpenRouterError(`OpenRouter returned an error (HTTP ${response.status}). Check the model ID and account.`);
+	}
+
+	return response;
+}
+
+
+/**
  * Makes one small, non-streaming provider request for the Models settings panel.
  * The server owns the credential and deliberately returns only display-safe result data.
  */
 export async function testOpenRouterModel(modelId: string): Promise<OpenRouterTestResult> {
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
-		throw new OpenRouterError('OpenRouter is not configured on the Lexia host.');
+		throw new OpenRouterError('OpenRouter is not configured on the Lexosa host.');
 	}
 
 	let response: Response;
@@ -103,7 +147,7 @@ const EMBEDDINGS_URL = 'https://openrouter.ai/api/v1/embeddings';
 export async function embedOpenRouterText(model: string, text: string): Promise<number[]> {
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
-		throw new OpenRouterError('OpenRouter is not configured on the Lexia host.');
+		throw new OpenRouterError('OpenRouter is not configured on the Lexosa host.');
 	}
 
 	let response: Response;
@@ -166,7 +210,7 @@ export async function completeOpenRouter(
 ): Promise<string> {
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
-		throw new OpenRouterError('OpenRouter is not configured on the Lexia host.');
+		throw new OpenRouterError('OpenRouter is not configured on the Lexosa host.');
 	}
 
 	let response: Response;
