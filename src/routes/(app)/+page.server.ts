@@ -1,5 +1,11 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { linkAttachmentsToMessage, listAttachments, saveAttachment, type Attachment } from '#lib/server/attachments.js';
+import {
+	attachmentKind,
+	linkAttachmentsToMessage,
+	listAttachments,
+	saveAttachment,
+	type Attachment
+} from '#lib/server/attachments.js';
 import { appendMessage, createSubAgent, listMessages } from '#lib/server/agents.js';
 import { bootstrapStatus } from '#lib/server/bootstrap.js';
 import { dispatchQueuedActions } from '#lib/server/builtins.js';
@@ -17,6 +23,7 @@ import {
 	listActions,
 	listRuns
 } from '#lib/server/runs.js';
+import { transcribePendingAudio } from '#lib/server/transcription.js';
 import { captureTurn, maybeReflect, prepareTurn } from '#lib/server/turn.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -70,6 +77,13 @@ export const actions: Actions = {
 			body: body || '(no text — see attachments)'
 		});
 		linkAttachmentsToMessage(attachmentIds, message.id);
+
+		// Voice notes are transcribed in the background: a provider round trip must
+		// not hold the reply open, and the transcript lands on the attachment row
+	// for the next render to pick up.
+		if ((listAttachments([message.id])[message.id] ?? []).some((attachment) => attachment.kind === 'audio')) {
+			void transcribePendingAudio();
+		}
 
 		// Capture first so the turn is retrievable immediately, then build the
 		// prompt from whatever memory already applies to it.
@@ -166,7 +180,7 @@ export const actions: Actions = {
 						name: entry.name,
 						mimeType: entry.type,
 						bytes: await entry.arrayBuffer(),
-						kind: entry.type.startsWith('audio/') ? 'audio' : 'file'
+						kind: attachmentKind(entry.name, entry.type)
 					})
 				);
 			} catch (error) {

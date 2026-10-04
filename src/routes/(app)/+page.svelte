@@ -358,16 +358,30 @@
 						{#if (data.attachments?.[message.id] ?? []).length > 0}
 							<div class="flex flex-wrap justify-end gap-1">
 								{#each data.attachments[message.id] as attachment (attachment.id)}
-									<span
-										class="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground"
-									>
-										{#if attachment.kind === 'audio'}
-											<FileAudioIcon class="size-3" />
-										{:else}
-											<FileIcon class="size-3" />
+									<div class="flex max-w-full flex-col items-end gap-1">
+										<span
+											class="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground"
+										>
+											{#if attachment.kind === 'audio'}
+												<FileAudioIcon class="size-3" />
+											{:else}
+												<FileIcon class="size-3" />
+											{/if}
+											{attachment.name}
+										</span>
+										<!-- A voice note's words, once a provider has transcribed it.
+		     A failure is shown rather than swallowed: "why is there no text" needs an
+		     answer that does not involve a log file. -->
+										{#if attachment.transcript}
+											<p
+												class="max-w-full rounded-md border border-border bg-card px-2 py-1.5 text-xs whitespace-pre-wrap text-muted-foreground"
+											>
+												{attachment.transcript}
+											</p>
+										{:else if attachment.transcriptError}
+											<p class="max-w-full text-right text-xs text-destructive">{attachment.transcriptError}</p>
 										{/if}
-										{attachment.name}
-									</span>
+									</div>
 								{/each}
 							</div>
 						{/if}
