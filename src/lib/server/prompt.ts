@@ -14,7 +14,7 @@ import { createHash } from 'node:crypto';
  */
 
 export type PromptSlots = {
-	/** Lexia's personality block; rewritten only at reflection boundaries. */
+	/** Lexosa's personality block; rewritten only at reflection boundaries. */
 	personality?: string | null;
 	/** The complete skill set, always injected in full, never selected per turn. */
 	skills: string[];

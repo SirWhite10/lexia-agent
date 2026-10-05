@@ -17,7 +17,7 @@ Demonstrate that one internal-chat request can produce multiple independently pr
 ## Scope
 
 - Persist a parent run, action records, dependency edges, and append-only run events in the existing state database.
-- Dispatch eligible actions from the stable Lexia host and report progress/results from the EVE execution boundary.
+- Dispatch eligible actions from the stable Lexosa host and report progress/results from the EVE execution boundary.
 - Stream events over SSE with snapshot loading and cursor-based replay.
 - Demonstrate one immediate action and one background action in the same run, including partial completion.
 - Recover queued and waiting actions after restart; move expired running actions to reconciliation unless safe idempotent retry is supported.

@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import { Database } from 'bun:sqlite';
 
 // Durable run/action state and the append-only per-run event log (WF-IMP-001,
-// ADR 0002). The stable Lexia host owns lifecycle, scheduling, recovery, and
+// ADR 0002). The stable Lexosa host owns lifecycle, scheduling, recovery, and
 // progress publication; EVE executes assigned actions under renewable leases.
 // Every state transition commits atomically with its replay event, and parent
 // run status is a derived projection over child action states, never a second
@@ -311,6 +311,10 @@ export function addAction(input: {
 	capability: string;
 	executionMode?: ExecutionMode;
 	dependsOn?: string[];
+	/** Seeds `result` at plan time: the payload the action runs on, before the
+	 * action has produced anything of its own. The dispatcher hands this to the
+	 * capability as its input. */
+	input?: string | null;
 	requiresInput?: boolean;
 	requiresApproval?: boolean;
 	idempotencyKey?: string | null;
@@ -322,7 +326,7 @@ export function addAction(input: {
 		capability: input.capability,
 		executionMode: input.executionMode ?? 'immediate',
 		status: 'planned',
-		result: null,
+		result: input.input ?? null,
 		error: null,
 		cancellationReason: null,
 		idempotencyKey: input.idempotencyKey ?? null,
@@ -340,7 +344,7 @@ export function addAction(input: {
 	try {
 		database
 			.query(
-				'INSERT INTO actions (id, run_id, outcome, capability, execution_mode, status, result, error, cancellation_reason, idempotency_key, requires_input, requires_approval, progress, attempt, lease_id, lease_expires_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?, NULL, 0, NULL, NULL, ?, ?)',
+				'INSERT INTO actions (id, run_id, outcome, capability, execution_mode, status, result, error, cancellation_reason, idempotency_key, requires_input, requires_approval, progress, attempt, lease_id, lease_expires_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?, ?, NULL, 0, NULL, NULL, ?, ?)',
 			)
 			.run(
 				action.id,
@@ -349,6 +353,7 @@ export function addAction(input: {
 				action.capability,
 				action.executionMode,
 				action.status,
+				action.result,
 				action.idempotencyKey,
 				action.requiresInput ? 1 : 0,
 				action.requiresApproval ? 1 : 0,

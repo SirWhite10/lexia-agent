@@ -1,7 +1,7 @@
-<!-- Initial Lexia baseline. Once spec.mdx, spec-config.ts, and spec:gen exist, edit those sources and regenerate this file. -->
+<!-- Initial Lexosa baseline. Once spec.mdx, spec-config.ts, and spec:gen exist, edit those sources and regenerate this file. -->
 ---
 version: alpha
-name: Lexia
+name: Lexosa
 description: A dark-first, friendly technical interface for a powerful server-side AI agent harness.
 colors:
   primary: "oklch(0.7850 0.1281 10.75)"
@@ -116,11 +116,11 @@ components:
     rounded: "{rounded.md}"
 ---
 
-# Lexia Design System
+# Lexosa Design System
 
 ## Overview
 
-Lexia is dark-first, warm, friendly, and technical. The interface should feel capable without feeling severe: Quicksand supplies approachable human shapes, while IA Writer Duo gives code, model output, and operational data a precise workspace voice.
+Lexosa is dark-first, warm, friendly, and technical. The interface should feel capable without feeling severe: Quicksand supplies approachable human shapes, while IA Writer Duo gives code, model output, and operational data a precise workspace voice.
 
 The default scheme is dark. Light mode is an explicit alternative, not the source of truth. Use the pink primary sparingly for the most important action or state on a surface; blue-violet secondary and sky-blue accent provide structure, navigation, information, and supporting actions.
 
@@ -128,7 +128,7 @@ All color calculations and derived shades should use OKLCH where supported. Pres
 
 ## Colors
 
-- **Primary:** `#FF95A5` / `oklch(0.7850 0.1281 10.75)`. The main Lexia action and highest-priority emphasis.
+- **Primary:** `#FF95A5` / `oklch(0.7850 0.1281 10.75)`. The main Lexosa action and highest-priority emphasis.
 - **Secondary:** `#425B9A` / `oklch(0.4822 0.1061 266.19)`. Navigation, secondary actions, and trusted structural emphasis.
 - **Accent / information:** `#76C0EC` / `oklch(0.7760 0.0971 236.01)`. Informational states, active context, and supporting highlights.
 - **Light surface:** `#FFF6DC` / `oklch(0.9734 0.0353 91.12)`. Warm light-mode surface and focus-ring anchor.
@@ -138,7 +138,7 @@ All color calculations and derived shades should use OKLCH where supported. Pres
 
 Derived tints and shades are allowed and should remain in OKLCH. Semantic status colors may be derived from the palette but must preserve readable contrast and must not compete with the primary action.
 
-The shadcn-svelte semantic variables should map to these roles. `primary`, `accent`, `chart-*`, and `sidebar-ring` are not copied from the starter palette: primary uses Lexia pink, accent uses Lexia sky blue, charts use the Lexia palette, and the ring uses the warm light-surface color.
+The shadcn-svelte semantic variables should map to these roles. `primary`, `accent`, `chart-*`, and `sidebar-ring` are not copied from the starter palette: primary uses Lexosa pink, accent uses Lexosa sky blue, charts use the Lexosa palette, and the ring uses the warm light-surface color.
 
 ## Typography
 
@@ -164,7 +164,7 @@ The default radius is `0.45rem`, matching the shadcn-svelte starting point. Use 
 
 ## Components
 
-Build the component system on shadcn-svelte primitives in `src/lib/components/ui/`. Lexia-specific components belong in `src/lib/components/ai/` and compose those primitives rather than copying React component APIs.
+Build the component system on shadcn-svelte primitives in `src/lib/components/ui/`. Lexosa-specific components belong in `src/lib/components/ai/` and compose those primitives rather than copying React component APIs.
 
 The initial AI component vocabulary includes conversation messages, composer/input, streaming response, code block, tool call, tool result, reasoning disclosure, workflow progress, model/tier badge, approval prompt, error state, and release/update status.
 

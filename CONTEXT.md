@@ -1,12 +1,32 @@
-# Lexia Context
+# Lexosa Context
 
-This glossary defines the product-specific language used by Lexia and its agents. Use these terms consistently in code, tickets, documentation, and prompts.
+This glossary defines the product-specific language used by Lexosa and its agents. Use these terms consistently in code, tickets, documentation, and prompts.
 
 ## Product and runtime
 
-**Lexia**:
+**Lexosa**:
 The user-facing agent harness and the single main agent the user talks to; it coordinates routing, execution, tools, skills, workflows, sub-agents, and persistent memory.
-_Avoid_: Alexia, Lexia-Agent when referring to the product itself.
+_Avoid_: Alexia, Lexia, Lexia-Agent when referring to the product itself.
+
+**thought tree**:
+The editable graph of questions Lexosa asks itself while routing a request, drawn at `/thinking`. Each node is a question, a route decision, or an action; its answers open the branch below. Edited by the operator, and later by the agent.
+_Avoid_: mind map, decision tree, flowchart.
+
+**provider**:
+An outside service Lexosa can be configured to call — OpenRouter, OpenAI, ElevenLabs, Deepgram, Stability AI, Runway. Each has exactly one credential, held in Settings → Providers, and declares the modalities it serves.
+_Avoid_: integration, connector, vendor, channel.
+
+**modality**:
+The kind of work a model does: text, spoken replies, transcriptions, images, or video. Every use-case belongs to one modality, which is what decides which providers and models may be assigned to it.
+_Avoid_: capability, media type, content type.
+
+**use case**:
+A named job a model is chosen for — Always, Quick answers, Research and search, Heavy work, Spoken replies, Transcriptions, Images, Video, or one the operator adds. The fallback is Always; anything unset falls through to it. An assignment names a model and the provider that serves it.
+_Avoid_: tier, mode, persona.
+
+**attachment**:
+A file or voice note sent with one chat message. Bytes are stored under the state directory and referenced from the message; the agent is told what arrived, not handed the contents.
+_Avoid_: upload batch, blob.
 
 **EVE runtime**:
 The server-side execution runtime that runs an agent turn, tools, workflows, skills, and model calls after routing.
@@ -39,7 +59,7 @@ _Avoid_: hard-coded model name when discussing routing policy.
 ## Conversation and memory
 
 **massive chat**:
-The single continuous conversation between the user and Lexia on this installation; it grows for the life of the install and is never split into separate chats.
+The single continuous conversation between the user and Lexosa on this installation; it grows for the life of the install and is never split into separate chats.
 _Avoid_: chat, session, thread when referring to the one conversation.
 
 **command**:
@@ -51,7 +71,7 @@ The compact record of a sub-agent's work shown in the massive chat — progress 
 _Avoid_: transcript, log.
 
 **memory**:
-Lexia's durable user-specific context carried across turns: the verbatim user-message log plus distilled facts.
+Lexosa's durable user-specific context carried across turns: the verbatim user-message log plus distilled facts.
 _Avoid_: conversation history, transcript, context window.
 
 **memory fact**:
@@ -59,34 +79,26 @@ A concise durable fact distilled from conversation and stored in memory, version
 _Avoid_: note, raw log, message.
 
 **reflection**:
-The turn-boundary step that distills memory facts and updates Lexia's personality.
+The turn-boundary step that distills memory facts and updates Lexosa's personality.
 _Avoid_: summarization, compaction.
 
 **personality**:
-Lexia's evolving set of timestamped traits, injected as a main block of its system prompt and updated by reflection.
+Lexosa's evolving set of timestamped traits, injected as a main block of its system prompt and updated by reflection.
 _Avoid_: persona, profile, preferences.
 
 **archive**:
 Soft removal: the entry leaves active lists but stays queryable; user data is never hard-deleted.
 _Avoid_: delete, remove.
 
-## Installed runtime
+## Agent runtime
 
-**EVE release**:
-An immutable, versioned directory containing an EVE source snapshot and its generated production runtime output.
-_Avoid_: live agent folder, mutable production agent.
+**agent project**:
+The EVE source tree the host runs with `eve dev` — `my-agent/` by default, `LEXIA_EVE_ROOT` overrides. It is edited in place and has no packaged or released form.
+_Avoid_: release, bundle, production agent, deployed agent.
 
-**active release**:
-The EVE release currently selected by Lexia to serve user requests.
-_Avoid_: latest release; a staged release is not active until promoted.
-
-**staged release**:
-An imported and validated EVE release that has not yet been promoted to serve traffic.
-_Avoid_: update branch, temporary worktree.
-
-**promotion**:
-The controlled transition that health-checks a staged release, makes it active, and restarts the EVE process.
-_Avoid_: hot patch.
+**agent source**:
+The authored content under the agent project's `agent/` directory: instructions, model configuration, channels, tools, skills, and subagents. Editing it changes agent behaviour on the next turn.
+_Avoid_: generated output, build artifact.
 
 ## Work execution
 
@@ -103,7 +115,7 @@ A user-approved unit of coding, research, or operational work that may run in an
 _Avoid_: background job when user review and promotion are required.
 
 **sub-agent**:
-An agent Lexia delegates work to — either a standing sub-agent or a one-shot agent task.
+An agent Lexosa delegates work to — either a standing sub-agent or a one-shot agent task.
 _Avoid_: worker, helper, process.
 
 **standing sub-agent**:
@@ -111,7 +123,7 @@ A sub-agent with a role card and focus that persists across conversations until 
 _Avoid_: sub-process, session.
 
 **role card**:
-A standing sub-agent's identity record: its Lexia-authored system prompt, focus, memory scope, and capability allowlist.
+A standing sub-agent's identity record: its Lexosa-authored system prompt, focus, memory scope, and capability allowlist.
 _Avoid_: profile, config.
 
 **focus**:

@@ -7,11 +7,11 @@ status: implemented
 
 ## Goal
 
-Allow an authenticated Lexia user to verify host-side OpenRouter credentials and a selected model using one small request, before implementing the durable intent-run vertical slice.
+Allow an authenticated Lexosa user to verify host-side OpenRouter credentials and a selected model using one small request, before implementing the durable intent-run vertical slice.
 
 ## Scope
 
-- Keep the OpenRouter API key in the Lexia host environment and make provider calls server-side only.
+- Keep the OpenRouter API key in the Lexosa host environment and make provider calls server-side only.
 - Accept a manually selected OpenRouter model ID; optionally prefill `OPENROUTER_MODEL`.
 - Send a fixed test prompt with a low output-token cap and show the reply, resolved model, and provider token usage.
 - Return safe, actionable errors without exposing the key or raw provider error payloads.

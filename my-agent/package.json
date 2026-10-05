@@ -23,6 +23,8 @@
   },
   "devDependencies": {
     "@types/node": "24.x",
+    "just-bash": "^3.6.0",
+    "microsandbox": "0.5.5",
     "typescript": "7.0.2"
   },
   "engines": {

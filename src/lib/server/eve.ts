@@ -1,9 +1,9 @@
 // Server-side client for the EVE dev server's HTTP API. The host never runs a
 // model itself: it hands a turn to EVE, reads the reply off the session
 // stream, and records it as a chat message. Credentials stay inside EVE.
-//
-// The base URL is configuration because the EVE process is external to the
-// stable host (ADR 0001); in development `eve dev` serves it on 2000.
+// The base URL is configuration because the EVE process is a separate
+// process from the host, spawned by eve-supervisor.ts (ADR 0003). `eve dev`
+// serves it on 2000 by default.
 const EVE_BASE_URL = (process.env.LEXIA_EVE_URL ?? 'http://127.0.0.1:2000').replace(/\/$/, '');
 const SESSION_TTL_MS = 60_000;
 

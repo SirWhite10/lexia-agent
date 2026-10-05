@@ -11,7 +11,7 @@ Settle how a compound user request becomes persistent actions, how clients repla
 
 ## Decision
 
-The stable Lexia host owns run/action state, SQLite persistence, scheduling, and recovery. EVE executes assigned actions. Each state transition and replay event is committed atomically; SSE replays persisted events by a per-run sequence. Expired execution leases enter reconciliation unless the capability supports a reusable idempotency key. Parent run status is derived from child actions, and partial completion is represented explicitly.
+The stable Lexosa host owns run/action state, SQLite persistence, scheduling, and recovery. EVE executes assigned actions. Each state transition and replay event is committed atomically; SSE replays persisted events by a per-run sequence. Expired execution leases enter reconciliation unless the capability supports a reusable idempotency key. Parent run status is derived from child actions, and partial completion is represented explicitly.
 
 Full consequences and status definitions are recorded in [ADR 0002](../../adr/0002-durable-intent-run-state.md).
 

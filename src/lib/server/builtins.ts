@@ -1,5 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
+import { appendMessage, getSubAgent } from './agents.js';
+import { sendToEve } from './eve.js';
 import { completeAction, failAction, listActions, reportProgress, renewLease } from './runs.js';
 import type { Action } from './runs.js';
 
@@ -39,7 +41,60 @@ const BUILTINS: Record<string, Builtin> = {
 			progress: ['acknowledged', 'recorded'],
 			result: `chat.ack recorded for action ${action.id}${input ? `: ${input}` : ''}`
 		})
+	},
+
+	/**
+	 * Delegation: the planner already decided this request belongs to a
+	 * sub-agent and created its role card, so this capability only has to run the
+	 * job and get the answer back into the conversation.
+	 */
+	'subagent.delegate': {
+		capability: 'subagent.delegate',
+		describe: (action) => action.outcome,
+		execute: async ({ action, input }) => {
+			const plan = parseDelegation(input);
+			const subAgent = getSubAgent(plan.subAgentId);
+			if (!subAgent) throw new Error('That sub-agent no longer exists.');
+
+			const finding = await sendToEve([subAgent.currentPrompt ?? '', plan.task].filter(Boolean).join('\n\n'));
+			if (finding.failed || !finding.reply) throw new Error(finding.reply || 'The sub-agent returned nothing.');
+
+			// The finding is a message of its own, not just action output: the main
+			// agent reads the conversation, so that is where it has to live.
+			appendMessage({ authorKind: 'sub_agent', authorId: subAgent.id, runId: action.runId, body: finding.reply });
+
+			// Hand it straight back so the user gets an answer in this turn instead
+			// of having to come back and ask whether it finished.
+			const report = await sendToEve(
+				[
+					`A sub-agent you delegated (${subAgent.name}) reported back with:\n\n${finding.reply}`,
+					'Reply to the user now, in your own voice, using what it found. Say plainly if it is inconclusive.'
+				].join('\n\n')
+			);
+			if (!report.failed && report.reply) {
+				appendMessage({ authorKind: 'lexia', runId: action.runId, body: report.reply });
+			}
+
+			return { progress: ['delegated', 'working', 'reported back'], result: `${subAgent.name}: ${finding.reply}` };
+		}
 	}
+};
+
+/** The delegation payload the planner seeded onto the action. A malformed one
+ * is a planner bug, and saying so beats failing the run silently. */
+function parseDelegation(input: string | null): { subAgentId: string; task: string } {
+	if (!input) throw new Error('This delegation carries no plan.');
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(input);
+	} catch {
+		throw new Error('This delegation carries an unreadable plan.');
+	}
+	const plan = parsed as { subAgentId?: unknown; task?: unknown };
+	if (typeof plan.subAgentId !== 'string' || typeof plan.task !== 'string') {
+		throw new Error('This delegation carries an incomplete plan.');
+	}
+	return { subAgentId: plan.subAgentId, task: plan.task };
 };
 
 export function builtinFor(capability: string): Builtin | undefined {

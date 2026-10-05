@@ -15,7 +15,7 @@
 </script>
 
 <svelte:head>
-	<title>Set up your agent — Lexia</title>
+	<title>Set up your agent — Lexosa</title>
 	<meta name="description" content="Name your agent and give it a starting personality." />
 </svelte:head>
 
@@ -41,7 +41,7 @@
 			<Card.Content class="space-y-3">
 				<Field.Field>
 					<Label for="name">Name</Label>
-					<Input id="name" name="name" placeholder="Lexia" required />
+					<Input id="name" name="name" placeholder="Lexosa" required />
 				</Field.Field>
 				<Field.Field>
 					<Label for="purpose">Purpose</Label>
