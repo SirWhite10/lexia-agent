@@ -2,12 +2,18 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { PROVIDERS } from '../src/lib/server/provider-registry.js';
 
 // transcription.ts reads assignments, the key store and the registry, all of
 // which resolve their state directory when they load, so the temp directory has
 // to exist before the imports below.
 const workspace = mkdtempSync(join(tmpdir(), 'lexosa-transcribe-test-'));
 process.env.LEXIA_STATE_DIR = workspace;
+// provider-key.ts captures the boot environment once, so every provider
+// variable has to be absent before it loads. Without this, an operator's
+// .env makes the OpenRouter case pick up a real key instead of the one
+// this suite saved.
+for (const provider of PROVIDERS) delete process.env[provider.envVar];
 const routes = await import('../src/lib/server/model-routes.js');
 const keys = await import('../src/lib/server/provider-key.js');
 const { extractTranscript, transcriptionTarget } = await import('../src/lib/server/transcription.js');

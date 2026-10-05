@@ -2,6 +2,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { existsSync, mkdtempSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { PROVIDERS } from '../src/lib/server/provider-registry.js';
 
 // provider-key.ts resolves its state directory when the module loads and
 // captures the boot environment once, on globalThis. The temp directory must
@@ -9,7 +10,12 @@ import { join } from 'node:path';
 // process because that capture cannot be repeated.
 const workspace = mkdtempSync(join(tmpdir(), 'lexosa-keys-test-'));
 process.env.LEXIA_STATE_DIR = workspace;
-delete process.env.OPENAI_API_KEY;
+// provider-key.ts captures the boot environment once, so every provider
+// variable has to be absent before it loads — not only the ones this file
+// names. A developer's .env or shell must not decide whether this suite
+// passes: with OPENROUTER_API_KEY set, the key source is 'environment'
+// rather than 'none' and saving reports no change.
+for (const provider of PROVIDERS) delete process.env[provider.envVar];
 const keys = await import('../src/lib/server/provider-key.js');
 
 const MODULE = new URL('../src/lib/server/provider-key.ts', import.meta.url).pathname;
