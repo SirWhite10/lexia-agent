@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { restartEve } from '#lib/server/eve-supervisor.js';
-import { MODALITY_LABELS, PROVIDERS, providerById } from '#lib/server/provider-registry.js';
+import { MODALITY_LABELS, PROVIDERS, providerBaseUrl, providerById } from '#lib/server/provider-registry.js';
 import { providerKeySource, saveProviderKey } from '#lib/server/provider-key.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -14,6 +14,9 @@ export const load: PageServerLoad = () => ({
 		summary: provider.summary,
 		modalities: provider.modalities.map((modality) => MODALITY_LABELS[modality]),
 		hasCatalogue: provider.catalogue !== null,
+		// Only for self-hosted providers: where this host will actually look.
+		baseUrlEnv: provider.baseUrlEnv ?? null,
+		baseUrl: providerBaseUrl(provider),
 		keySource: providerKeySource(provider.id)
 	}))
 });

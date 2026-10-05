@@ -47,22 +47,46 @@ if (!existingColumns.has('modality')) {
  * go, which is a worse failure than an unhelpful model. */
 export const ALWAYS_USE_CASE = 'always';
 
-const BUILTIN_USE_CASES: ReadonlyArray<{ useCase: string; label: string; modality: Modality }> = [
+const BUILTIN_USE_CASES: ReadonlyArray<{
+	useCase: string;
+	label: string;
+	modality: Modality;
+	modelId?: string;
+	providerId?: string;
+}> = [
 	{ useCase: ALWAYS_USE_CASE, label: 'Always', modality: 'text' },
 	{ useCase: 'quick', label: 'Quick answers', modality: 'text' },
 	{ useCase: 'research', label: 'Research and search', modality: 'text' },
 	{ useCase: 'heavy', label: 'Heavy work', modality: 'text' },
 	{ useCase: 'speech', label: 'Spoken replies', modality: 'speech' },
-	{ useCase: 'transcription', label: 'Transcriptions', modality: 'transcription' },
+	{
+		useCase: 'transcription',
+		label: 'Transcriptions',
+		modality: 'transcription',
+		// The one row seeded with a model, because transcribing a voice note that
+		// nobody has configured anything for is a feature that never runs. Whisper
+		// Large v3 is listed in OpenRouter's own transcription docs, so this is a
+		// model that exists rather than one that sounds plausible. It costs a
+		// fraction of a cent per recording and is repointed in Settings → Models.
+		modelId: 'openai/whisper-large-v3',
+		providerId: 'openrouter'
+	},
 	{ useCase: 'images', label: 'Images', modality: 'image' },
 	{ useCase: 'video', label: 'Video', modality: 'video' }
 ];
 
 const seedBuiltin = database.query(
-	"INSERT OR IGNORE INTO model_assignments (use_case, label, model_id, builtin, created_at, provider_id, modality) VALUES (?, ?, '', 1, ?, '', ?)"
+	'INSERT OR IGNORE INTO model_assignments (use_case, label, model_id, builtin, created_at, provider_id, modality) VALUES (?, ?, ?, 1, ?, ?, ?)'
 );
 for (const builtin of BUILTIN_USE_CASES) {
-	seedBuiltin.run(builtin.useCase, builtin.label, new Date().toISOString(), builtin.modality);
+	seedBuiltin.run(
+		builtin.useCase,
+		builtin.label,
+		builtin.modelId ?? '',
+		new Date().toISOString(),
+		builtin.providerId ?? '',
+		builtin.modality
+);
 }
 
 export type UseCaseAssignment = {
@@ -144,19 +168,25 @@ export function listUseCases(): UseCaseAssignment[] {
 /** Points a use-case at a model on a provider. An empty id clears the assignment
  * back to "not chosen" rather than storing a blank that resolves to a blank
  * request. A model is only accepted from a provider the app knows: an id from a
- * service that is not configured can never be called. */
+ * service that is not configured can never be called.
+ *
+ * A provider given with no model is kept rather than discarded: that is how a
+ * self-hosted server is selected, since it was started with its own model and
+ * the row legitimately has nothing typed in it. */
 export function assignModel(useCase: string, modelId: string, providerId = ''): UseCaseAssignment {
 	const existing = findUseCase(useCase);
 	if (!existing) throw new Error(`No use-case named “${useCase}”.`);
 
-	const trimmed = modelId.trim();
-	if (trimmed.length > 200) throw new Error('That model ID is too long to be a real model id.');
-	if (trimmed && !providerById(providerId)) throw new Error('Choose the provider that serves this model.');
+	const trimmedModel = modelId.trim();
+	const trimmedProvider = providerId.trim();
+	if (trimmedModel.length > 200) throw new Error('That model ID is too long to be a real model id.');
+	if (trimmedProvider && !providerById(trimmedProvider)) throw new Error('Choose the provider that serves this model.');
+	if (trimmedModel && !trimmedProvider) throw new Error('Choose the provider that serves this model.');
 
 	database
 		.query('UPDATE model_assignments SET model_id = ?, provider_id = ? WHERE use_case = ?')
-		.run(trimmed, trimmed ? providerId : '', useCase);
-	return { ...existing, modelId: trimmed, providerId: trimmed ? providerId : '' };
+		.run(trimmedModel, trimmedProvider, useCase);
+	return { ...existing, modelId: trimmedModel, providerId: trimmedProvider };
 }
 
 /** Rejects every label that would be ambiguous in the picker: blank names, names

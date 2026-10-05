@@ -76,6 +76,11 @@
 								Stored at <code>app-data/state/{provider.id}.key</code>, readable only by you.
 								<code>{provider.envVar}</code> in the host environment wins over it. Submit the field
 								empty to remove the stored key.
+								{#if provider.baseUrlEnv}
+									Reached at <code>{provider.baseUrl}</code>. Point it elsewhere with
+									<code>{provider.baseUrlEnv}</code> in the host environment and restart; no
+									key is needed unless that server wants one.
+								{/if}
 								{#if !provider.hasCatalogue}
 									{provider.label} publishes no model list we have verified, so its models are
 									typed by hand in Settings → Models.

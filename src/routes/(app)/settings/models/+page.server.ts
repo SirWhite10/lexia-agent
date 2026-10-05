@@ -10,21 +10,25 @@ type ProviderCard = {
 	id: string;
 	label: string;
 	modalities: string[];
-	/** False when the provider publishes no list we have verified: its model id
-	 * is then typed by hand rather than picked from a list. */
+	/** False when the provider publishes no list we have verified: its model id is
+	 * then typed by hand rather than picked from a list. */
 	hasCatalogue: boolean;
+	/** Whether that catalogue actually lists models for the modality of this row.
+	 * OpenRouter serves transcription models, but its /models list is text-only. */
+	coversModality: boolean;
 	configured: boolean;
 };
 
 async function describeProviders(modality: Modality): Promise<ProviderCard[]> {
-	// Every provider that serves this modality is offered, configured or not:
-	// the operator may be about to add a key in Settings → Providers.
+	// Every provider that serves this modality is offered, configured or not: the
+	// operator may be about to add a key in Settings → Providers.
 	return await Promise.all(
 		providersFor(modality).map(async (provider) => ({
 			id: provider.id,
 			label: provider.label,
 			modalities: provider.modalities.map((served) => MODALITY_LABELS[served]),
 			hasCatalogue: provider.catalogue !== null,
+			coversModality: provider.catalogueModalities?.includes(modality) ?? false,
 			configured: providerKeySource(provider.id) !== 'none'
 		}))
 	);

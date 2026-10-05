@@ -235,14 +235,14 @@
 												</NativeSelect.Option>
 											{/each}
 										</NativeSelect.Root>
-										{#if row.modelId && !chosen?.hasCatalogue}
+										{#if row.modelId && !(chosen?.hasCatalogue && chosen.coversModality)}
 											<span class="max-w-32 truncate font-mono text-xs text-muted-foreground" title={row.modelId}>
 												{row.modelId}
 											</span>
 										{/if}
 									</div>
 
-									{#if chosen?.hasCatalogue}
+									{#if chosen?.hasCatalogue && chosen.coversModality}
 										<button
 											type="button"
 											class="flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-input bg-transparent px-2.5 text-left text-sm outline-none transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-ring/50"
@@ -313,10 +313,13 @@
 												spellcheck="false"
 											/>
 											<Field.FieldDescription>
-												{chosen?.label} publishes no model list we have verified, so its model id is typed here.
+												{chosen?.label}
+												{chosen?.hasCatalogue
+													? 'lists models for text only, so this row takes the id typed here.'
+													: 'publishes no model list we have verified, so its model id is typed here.'}
 											</Field.FieldDescription>
 										</Field.Field>
-										<Button type="submit" size="sm" class="mt-2" disabled={!row.modelId.trim()}>
+										<Button type="submit" size="sm" class="mt-2">
 											Save model
 										</Button>
 									{/if}

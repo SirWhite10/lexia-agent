@@ -45,6 +45,33 @@ describe('choosing a transcription provider', () => {
 		expect(eleven?.url).toBe('https://api.elevenlabs.io/v1/speech-to-text');
 	});
 
+	test('talks to OpenRouter\'s own transcription endpoint', () => {
+		keys.saveProviderKey('openrouter', 'or-test');
+		routes.assignModel('transcription', 'openai/whisper-large-v3', 'openrouter');
+		const target = transcriptionTarget();
+
+		expect(target?.url).toBe('https://openrouter.ai/api/v1/audio/transcriptions');
+		expect(target?.headers.Authorization).toBe('Bearer or-test');
+		expect(target?.encoding).toBe('multipart');
+		keys.saveProviderKey('openrouter', '');
+	});
+
+	test('reaches a self-hosted server with no credential at all', () => {
+		delete process.env.LOCAL_API_KEY;
+		delete process.env.LOCAL_TRANSCRIPTION_URL;
+		// A local server was started with its model already: an empty id is the
+		// right answer there, not an unconfigured one.
+		routes.assignModel('transcription', '', 'local');
+		const target = transcriptionTarget();
+
+		expect(target?.url).toBe('http://127.0.0.1:8080/v1/audio/transcriptions');
+		expect(target?.headers).toEqual({});
+
+		process.env.LOCAL_TRANSCRIPTION_URL = 'http://192.168.1.9:9000/';
+		expect(transcriptionTarget()?.url).toBe('http://192.168.1.9:9000/v1/audio/transcriptions');
+		delete process.env.LOCAL_TRANSCRIPTION_URL;
+	});
+
 	test('refuses a provider with no verified transcription endpoint', () => {
 		// Runway is in the registry, but nothing has verified an endpoint for it:
 		// guessing one would spend the operator's request to return a 404.

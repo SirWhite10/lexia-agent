@@ -40,14 +40,29 @@ also ends by deleting cookies for the host or running **Sign out**.
 
 ## Model provider credentials
 
-Settings → Integrations writes the OpenRouter key to `openrouter.key` in the state
-directory, owner-readable only, and restarts the supervised EVE process so the new
-credential reaches the agent. EVE reads `process.env.OPENROUTER_API_KEY` once at
-module load and inherits the host environment; that inheritance is why the restart is
-part of saving rather than something to remember. Submitting the field empty removes
-the stored key and restarts EVE again.
+Settings → Providers holds one credential per provider, each written to
+`<provider>.key` in the state directory, owner-readable only. `<PROVIDER>_API_KEY` in
+the host environment outranks the stored file for the life of the process, so a
+shell configuration is never silently overridden from a browser; submitting a field
+empty removes that provider's key.
 
-`OPENROUTER_API_KEY` in the environment (see `.env.example`) takes precedence over the
-stored key, and the Integrations page says so when both are present. With no key from
-either source, the host reports `OpenRouter is not configured on the Lexosa host.` and
-Settings → Models disables its test panel.
+Saving OpenRouter's key restarts the supervised EVE process: it reads
+`process.env.OPENROUTER_API_KEY` once at module load and inherits the host
+environment, so the restart is part of saving rather than something to remember.
+No other provider's credential reaches EVE.
+
+Settings → Models maps use-cases to a model and the provider that serves it.
+Catalogues are fetched per provider and only when a key exists; a provider whose
+list does not cover that row's modality — OpenRouter's `/models` is text-only, so
+its transcription models are typed in — takes a typed model id instead of a picker.
+
+Transcription runs in the background after a turn that carried audio, using the
+Transcriptions use-case. It is the one row seeded with a model:
+`openai/whisper-large-v3` through OpenRouter's `/api/v1/audio/transcriptions`.
+`Local model (self-hosted)` points at an OpenAI-shaped transcription server —
+whisper.cpp, Faster-Whisper, Parakeet — reached at `LOCAL_TRANSCRIPTION_URL`
+(default `http://127.0.0.1:8080`), needing no credential. Handy
+(https://github.com/cjpais/handy) is the reference for running such a model
+offline. AssemblyAI's `universal-3-5-pro` is an AssemblyAI model, not an
+OpenRouter one: reaching it means an AssemblyAI key and provider, which the
+registry does not carry yet.

@@ -6,7 +6,7 @@ import {
 	type UntranscribedAudio
 } from './attachments.js';
 import { modelForUseCase, providerForUseCase } from './model-routes.js';
-import { providerById } from './provider-registry.js';
+import { providerBaseUrl, providerById } from './provider-registry.js';
 import { providerKey } from './provider-key.js';
 
 // Voice notes the composer records are stored on send and left alone. This is
@@ -32,19 +32,26 @@ export type TranscriptionTarget = {
 export type TranscriptionReport = { transcribed: number; failed: number; skipped: boolean };
 
 /** What the current configuration asks for, or null when it asks for nothing:
- * no model chosen, no provider, no key on this host, or a provider we have no
- * verified transcription endpoint for. Each of those is a state the operator can
- * fix, so the sweep skips quietly rather than failing the turn.
+ * no provider, no model where one is needed, no credential on this host, or a
+ * provider we have no verified transcription endpoint for. Each of those is a
+ * state the operator can fix, so the sweep skips quietly rather than failing
+ * the turn.
  */
 export function transcriptionTarget(): TranscriptionTarget | null {
 	const providerId = providerForUseCase(TRANSCRIPTION_USE_CASE);
-	const model = modelForUseCase(TRANSCRIPTION_USE_CASE);
-	if (!providerId || !model) return null;
+	const provider = providerId ? providerById(providerId) : undefined;
+	if (!provider || !providerId) return null;
 
-	const provider = providerById(providerId);
-	if (!provider) return null;
+	// A self-hosted server was started with its model already, so an empty id is a
+	// valid answer there; everywhere else a model is required.
+	const model = modelForUseCase(TRANSCRIPTION_USE_CASE) ?? '';
+	const selfHosted = providerBaseUrl(provider);
 	const key = providerKey(providerId);
-	if (!key) return null;
+	if (!key && !selfHosted) return null;
+	if (!selfHosted && !model) return null;
+	// Every hosted branch below needs a credential, and the guard above has
+	// already established one is present for those.
+	const authKey = key ?? '';
 
 	if (providerId === 'deepgram') {
 		return {
@@ -52,7 +59,7 @@ export function transcriptionTarget(): TranscriptionTarget | null {
 			providerLabel: provider.label,
 			model,
 			url: `https://api.deepgram.com/v1/listen?model=${encodeURIComponent(model)}&smart_format=true`,
-			headers: { Authorization: `Token ${key}` },
+			headers: { Authorization: `Token ${authKey}` },
 			encoding: 'raw'
 		};
 	}
@@ -63,7 +70,18 @@ export function transcriptionTarget(): TranscriptionTarget | null {
 			providerLabel: provider.label,
 			model,
 			url: 'https://api.elevenlabs.io/v1/speech-to-text',
-			headers: { 'xi-api-key': key },
+			headers: { 'xi-api-key': authKey },
+			encoding: 'multipart'
+		};
+	}
+
+	if (providerId === 'openrouter') {
+		return {
+			providerId,
+			providerLabel: provider.label,
+			model,
+			url: 'https://openrouter.ai/api/v1/audio/transcriptions',
+			headers: { Authorization: `Bearer ${authKey}` },
 			encoding: 'multipart'
 		};
 	}
@@ -74,7 +92,18 @@ export function transcriptionTarget(): TranscriptionTarget | null {
 			providerLabel: provider.label,
 			model,
 			url: 'https://api.openai.com/v1/audio/transcriptions',
-			headers: { Authorization: `Bearer ${key}` },
+			headers: { Authorization: `Bearer ${authKey}` },
+			encoding: 'multipart'
+		};
+	}
+
+	if (providerId === 'local' && selfHosted) {
+		return {
+			providerId,
+			providerLabel: provider.label,
+			model,
+			url: `${selfHosted}/v1/audio/transcriptions`,
+			headers: authKey ? { Authorization: `Bearer ${authKey}` } : {},
 			encoding: 'multipart'
 		};
 	}
@@ -117,7 +146,9 @@ async function transcribeOne(audio: UntranscribedAudio, target: TranscriptionTar
 				: (() => {
 						const form = new FormData();
 						form.append('file', new Blob([bytes], { type: audio.mimeType }), audio.id);
-						form.append('model', target.model);
+						// A local server was started with its model already; sending an
+						// empty `model` there would be asking it for something unnamed.
+						if (target.model) form.append('model', target.model);
 						return form;
 					})()
 	});
@@ -126,7 +157,10 @@ async function transcribeOne(audio: UntranscribedAudio, target: TranscriptionTar
 		// The provider's own wording is the useful part here: a rejected key and a
 		// wrong model fail the same way from the host's point of view.
 		const detail = (await response.text()).replace(/\s+/g, ' ').trim().slice(0, 200);
-		recordTranscriptError(audio.id, `${target.providerLabel} refused the audio (${response.status})${detail ? `: ${detail}` : ''}`);
+		recordTranscriptError(
+			audio.id,
+			`${target.providerLabel} refused the audio (${response.status})${detail ? `: ${detail}` : ''}`
+		);
 		return;
 	}
 
@@ -157,7 +191,8 @@ export async function transcribePendingAudio(): Promise<TranscriptionReport> {
 			report.transcribed += 1;
 		} catch (error) {
 			report.failed += 1;
-			const reason = error instanceof DOMException && error.name === 'TimeoutError' ? 'timed out' : 'could not be reached';
+			const reason =
+				error instanceof DOMException && error.name === 'TimeoutError' ? 'timed out' : 'could not be reached';
 			recordTranscriptError(audio.id, `${target.providerLabel} ${reason}.`);
 		}
 	}
