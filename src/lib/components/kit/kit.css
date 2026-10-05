@@ -1,0 +1,527 @@
+/*
+ * GPUI Kit token layer (browser port).
+ *
+ * Every value here is transcribed from the crate source, not invented:
+ *   - colours:   gpui-component-0.7.0/src/theme/default-theme.json (+ default-colors.json palette)
+ *   - radius:    gpui-base-0.7.0/src/theme_tokens.rs  (RadiusTokens::default)
+ *   - spacing:   gpui-base-0.7.0/src/theme_tokens.rs  (SpacingTokens::default)
+ *   - typography:gpui-base-0.7.0/src/theme_tokens.rs  (TypographyTokens::default)
+ *   - motion:    gpui-component-0.7.0/src/theme/motion.rs (MotionTokens::default)
+ *
+ * Scope rule: the tokens live on `.kit` and nowhere else, so this page can
+ * preview GPUI Kit's real visual language without touching the Lexia design
+ * tokens in src/routes/layout.css. Components read them with the Tailwind
+ * arbitrary-value shorthand, e.g. `bg-(--kit-background)`.
+ *
+ * Mode: GPUI Kit ships light and dark. The host app defaults to dark
+ * (src/routes/+layout.svelte), so `.kit` is dark and `.kit[data-mode='light']`
+ * is the explicit alternative. The route flips the attribute, never the class.
+ */
+
+.kit {
+	/* Surfaces and text -------------------------------------------------- */
+	--kit-background: #0a0a0a; /* neutral-950 */
+	--kit-foreground: #fafafa; /* neutral-50 */
+	--kit-card: #0a0a0a;
+	--kit-card-foreground: #fafafa;
+	--kit-popover: #0a0a0a;
+	--kit-popover-foreground: #fafafa;
+	--kit-sidebar: #0a0a0a;
+	--kit-sidebar-foreground: #f5f5f5; /* neutral-100 */
+	--kit-sidebar-accent: #262626; /* neutral-800 */
+	--kit-sidebar-accent-foreground: #f5f5f5;
+	--kit-sidebar-border: #262626;
+	--kit-sidebar-primary: #f5f5f5;
+	--kit-sidebar-primary-foreground: #0a0a0a;
+	--kit-list: #0a0a0a;
+	--kit-list-head: #17171766;
+	--kit-list-even: #17171766;
+	--kit-list-hover: #171717;
+	--kit-list-active: #1e40af33;
+	--kit-list-active-border: #1d4ed8;
+	--kit-group-box: #0a0a0a;
+	--kit-group-box-foreground: #fafafa;
+
+	/* Accents and status -------------------------------------------------- */
+	--kit-primary: #fafafa; /* neutral-50 */
+	--kit-primary-hover: #e5e5e5; /* neutral-200 */
+	--kit-primary-active: #d4d4d4; /* neutral-300 */
+	--kit-primary-foreground: #0a0a0a;
+	--kit-secondary: #262626; /* neutral-800 */
+	--kit-secondary-hover: #292929;
+	--kit-secondary-active: #212121;
+	--kit-secondary-foreground: #fafafa;
+	--kit-muted: #262626;
+	--kit-muted-foreground: #a3a3a3; /* neutral-400 */
+	--kit-accent: #262626;
+	--kit-accent-foreground: #fafafa;
+	--kit-success: #4ade80; /* green-400 */
+	--kit-success-foreground: #16a34a; /* green-600 */
+	--kit-warning: #fde047; /* yellow-300 */
+	--kit-warning-foreground: #ca8a04; /* yellow-600 */
+	--kit-danger: #f87171; /* red-400 */
+	--kit-danger-foreground: #dc2626; /* red-600 */
+	--kit-info: #22d3ee; /* cyan-400 */
+	--kit-info-foreground: #0891b2; /* cyan-600 */
+	--kit-link: #fafafa;
+	--kit-link-hover: #ffffff;
+
+	/* Filled status buttons. Upstream pairs the light dark-mode status fills with the
+	   dark `*_foreground` tokens, which is the right colour for status *text* on the
+	   page surface but unreadable as a label on the fill itself. The button therefore
+	   takes its label colour from here instead; the status tokens themselves are
+	   transcribed unchanged. */
+	--kit-status-foreground: #0a0a0a;
+
+	/* `switch.background` and the thumb fallback, which is the page background. */
+	--kit-switch: #404040; /* neutral-700 */
+	--kit-switch-thumb: var(--kit-background);
+
+	/* The `default` button surface is mode-dependent upstream: `input` mixed 30%
+	   toward transparent in dark, the plain background in light. */
+	--kit-button: color-mix(in oklab, var(--kit-input-border) 30%, transparent);
+	--kit-button-hover: color-mix(in oklab, var(--kit-input-border) 50%, transparent);
+	--kit-button-active: color-mix(in oklab, var(--kit-input-border) 80%, #000000);
+	--kit-button-foreground: var(--kit-foreground);
+
+	/* Two surfaces upstream are mixed by a mode-dependent ratio: the tinted bubble
+	   takes 24% of primary over the background in dark, 12% in light, and the
+	   destructive bubble takes 20%/10% of danger. Encoding the ratio keeps the
+	   components free of mode branches. */
+	--kit-tinted-mix: 24%;
+	--kit-destructive-mix: 20%;
+
+	/* Lines, focus, overlays ---------------------------------------------- */
+	--kit-border: #262626; /* neutral-800 */
+	--kit-input-border: #2f2f2f;
+	--kit-ring: #737373; /* neutral-500 */
+	--kit-overlay: #00000033;
+	--kit-selection: #1d4ed8; /* blue-700 */
+	--kit-skeleton: #171717; /* neutral-900 */
+	--kit-window-border: #262626;
+	--kit-title-bar: #171717;
+	--kit-status-bar: #171717;
+
+	/* Tabs, tables, scrollbars -------------------------------------------- */
+	--kit-tab-bar: #171717;
+	--kit-tab-foreground: #d4d4d4;
+	--kit-tab-active: #0a0a0a;
+	--kit-tab-active-foreground: #fafafa;
+	--kit-table: #0a0a0a;
+	--kit-table-head: #17171766;
+	--kit-table-head-foreground: #525252; /* neutral-600 */
+	--kit-table-row-border: #262626b3;
+	--kit-table-even: #17171766;
+	--kit-table-hover: #171717;
+	--kit-scrollbar-thumb: #525252e6;
+	--kit-scrollbar-thumb-hover: #525252;
+
+	/* Editor / code ------------------------------------------------------- */
+	--kit-code-background: #171717;
+	--kit-code-foreground: #caccca;
+	--kit-code-keyword: #87b1f6;
+	--kit-code-string: #a3e09f;
+	--kit-code-number: #cc9e00;
+	--kit-code-comment: #9d9d9d;
+	--kit-code-function: #b3c5f3;
+	--kit-code-type: #cba6f7;
+	--kit-code-tag: #419cff;
+	--kit-code-added: #0c4619;
+	--kit-button: var(--kit-background);
+	--kit-button-hover: var(--kit-muted);
+	--kit-button-active: var(--kit-border);
+	--kit-button-foreground: var(--kit-foreground);
+	--kit-code-removed: #46190c;
+	--kit-code-added-foreground: #4ade80;
+	--kit-code-removed-foreground: #f87171;
+
+	/* Charts --------------------------------------------------------------- */
+	--kit-chart-1: #93c5fd;
+	--kit-chart-2: #3b82f6;
+	--kit-chart-3: #2563eb;
+	--kit-chart-4: #1d4ed8;
+	--kit-chart-5: #1e40af;
+	--kit-chart-grid: #26262699;
+	--kit-chart-bullish: #22c55e; /* green-600 */
+	--kit-chart-bearish: #ef4444; /* red-600 */
+
+	/* Radius (RadiusTokens) ------------------------------------------------ */
+	--kit-radius-none: 0px;
+	--kit-radius-sm: 3px;
+	--kit-radius-md: 6px;
+	--kit-radius-lg: 8px;
+	--kit-radius-xl: 12px;
+	/* Upstream derives the larger surface tiers from the theme radius rather than
+	   listing them: radius_2xl = radius * 2.5, radius_3xl = radius * 3. */
+	--kit-radius-2xl: 20px;
+	--kit-radius-3xl: 24px;
+	--kit-radius-full: 9999px;
+
+	/* Spacing (SpacingTokens) ---------------------------------------------- */
+	--kit-space-xxs: 2px;
+	--kit-space-xs: 4px;
+	--kit-space-sm: 8px;
+	--kit-space-md: 12px;
+	--kit-space-lg: 16px;
+	--kit-space-xl: 24px;
+	--kit-space-xxl: 32px;
+
+	/* Typography (TypographyTokens) ---------------------------------------- */
+	--kit-font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+	--kit-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+	--kit-text-xs: 12px;
+	--kit-leading-xs: 16px;
+	--kit-text-sm: 14px;
+	--kit-leading-sm: 20px;
+	--kit-text-md: 16px;
+	--kit-leading-md: 24px;
+	--kit-text-lg: 18px;
+	--kit-leading-lg: 28px;
+	--kit-text-xl: 20px;
+	--kit-leading-xl: 28px;
+	--kit-text-mono: 13px;
+	--kit-leading-mono: 20px;
+
+	/* Motion (MotionTokens) ------------------------------------------------ */
+	--kit-duration-instant: 0ms;
+	--kit-duration-fast: 120ms;
+	--kit-duration-normal: 180ms;
+	--kit-duration-slow: 280ms;
+	--kit-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+	--kit-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+	--kit-ease-move: cubic-bezier(0.2, 0, 0, 1);
+
+	color: var(--kit-foreground);
+	background-color: var(--kit-background);
+	font-family: var(--kit-font-sans);
+	font-size: var(--kit-text-sm);
+	line-height: var(--kit-leading-sm);
+	-webkit-font-smoothing: antialiased;
+}
+
+.kit[data-mode='light'] {
+	--kit-background: #ffffff;
+	--kit-foreground: #0a0a0a; /* neutral-950 */
+	--kit-card: #ffffff;
+	--kit-card-foreground: #0a0a0a;
+	--kit-popover: #ffffff;
+	--kit-popover-foreground: #0a0a0a;
+	--kit-sidebar: #fafafa;
+	--kit-sidebar-foreground: #171717; /* neutral-900 */
+	--kit-sidebar-accent: #e5e5e5;
+	--kit-sidebar-accent-foreground: #171717;
+	--kit-sidebar-border: #e5e5e5;
+	--kit-sidebar-primary: #171717;
+	--kit-sidebar-primary-foreground: #fafafa;
+	--kit-list: #ffffff;
+	--kit-list-head: #fafafa;
+	--kit-list-even: #fafafa;
+	--kit-list-hover: #f5f5f5;
+	--kit-list-active: #bfdbfe33;
+	--kit-list-active-border: #60a5fa;
+	--kit-group-box: #f5f5f5;
+	--kit-group-box-foreground: #171717;
+
+	--kit-primary: #171717; /* neutral-900 */
+	--kit-primary-hover: #262626; /* neutral-800 */
+	--kit-primary-active: #404040; /* neutral-700 */
+	--kit-primary-foreground: #fafafa;
+	--kit-secondary: #e5e5e5; /* neutral-200 */
+	--kit-secondary-hover: #e5e5e5;
+	--kit-secondary-active: #d4d4d4;
+	--kit-secondary-foreground: #171717;
+	--kit-muted: #f5f5f5; /* neutral-100 */
+	--kit-muted-foreground: #737373; /* neutral-500 */
+	--kit-accent: #f5f5f5;
+	--kit-accent-foreground: #171717;
+	--kit-success: #22c55e; /* green-500 */
+	--kit-success-foreground: #fafafa;
+	--kit-warning: #eab308; /* yellow-500 */
+	--kit-warning-foreground: #fafafa;
+	--kit-danger: #ef4444; /* red-500 */
+	--kit-danger-foreground: #fafafa;
+	--kit-info: #06b6d4; /* cyan-500 */
+	--kit-info-foreground: #fafafa;
+	--kit-link: #0a0a0a;
+	--kit-link-hover: #404040;
+
+	--kit-switch: #d4d4d4; /* neutral-300 */
+	--kit-switch-thumb: var(--kit-background);
+
+	--kit-status-foreground: #fafafa;
+
+	/* `default` button surfaces: upstream uses the plain background in light. */
+	--kit-button: var(--kit-background);
+	--kit-button-hover: var(--kit-muted);
+	--kit-button-active: var(--kit-border);
+	--kit-button-foreground: var(--kit-foreground);
+
+	--kit-tinted-mix: 12%;
+	--kit-destructive-mix: 10%;
+
+	--kit-border: #e5e5e5; /* neutral-200 */
+	--kit-input-border: #e5e5e5;
+	--kit-ring: #a3a3a3; /* neutral-400 */
+	--kit-overlay: #0000000d;
+	--kit-selection: #55a0fc;
+	--kit-skeleton: #f5f5f5;
+	--kit-window-border: #e5e5e5;
+	--kit-title-bar: #f8f8f8;
+	--kit-status-bar: #f8f8f8;
+
+	--kit-tab-bar: #f5f5f5;
+	--kit-tab-foreground: #404040;
+	--kit-tab-active: #ffffff;
+	--kit-tab-active-foreground: #171717;
+	--kit-table: #ffffff;
+	--kit-table-head: #fafafa;
+	--kit-table-head-foreground: #737373;
+	--kit-table-row-border: #e5e5e5b3;
+	--kit-table-even: #fafafa;
+	--kit-table-hover: #f5f5f5;
+	--kit-scrollbar-thumb: #a3a3a3e6;
+	--kit-scrollbar-thumb-hover: #a3a3a3;
+
+	--kit-code-background: #ffffff;
+	--kit-code-foreground: #000000;
+	--kit-code-keyword: #0433ff;
+	--kit-code-string: #036a07;
+	--kit-code-number: #0433ff;
+	--kit-code-comment: #007fff;
+	--kit-code-function: #0000a2;
+	--kit-code-type: #6f42c1;
+	--kit-code-tag: #0433ff;
+	--kit-code-added: #e6ffec;
+	--kit-code-removed: #ffebe9;
+	--kit-code-added-foreground: #116329;
+	--kit-code-removed-foreground: #a40e26;
+}
+
+.kit :where(code, pre, kbd, samp) {
+	font-family: var(--kit-font-mono);
+}
+
+/* GPUI Kit draws its own scrollbar: a 3px resting thumb that widens to 6px on
+   hover and 8px while dragging, inset 4px from the region edge. A browser
+   scrollbar cannot animate that way, so the resting track is hidden and the
+   thumb is emulated with ::-webkit-scrollbar. */
+.kit-scroll {
+	scrollbar-width: thin;
+	scrollbar-color: var(--kit-scrollbar-thumb) transparent;
+	overscroll-behavior: contain;
+}
+
+.kit-scroll::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+.kit-scroll::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.kit-scroll::-webkit-scrollbar-thumb {
+	background-color: var(--kit-scrollbar-thumb);
+	border: 2px solid transparent;
+	background-clip: content-box;
+	border-radius: var(--kit-radius-full);
+	min-height: 32px;
+}
+
+.kit-scroll::-webkit-scrollbar-thumb:hover {
+	background-color: var(--kit-scrollbar-thumb-hover);
+}
+
+/* Focus: GPUI Kit draws a 2px ring in `ring`, offset from the control so the
+   control edge stays readable. Applied through :focus-visible only, matching
+   the desktop convention of no ring on pointer press. */
+.kit :where(button, a, input, textarea, select, [tabindex]):focus-visible {
+	outline: 2px solid var(--kit-ring);
+	outline-offset: 2px;
+}
+
+.kit ::selection {
+	background-color: var(--kit-selection);
+	color: var(--kit-foreground);
+}
+
+@keyframes kit-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes kit-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.4;
+	}
+}
+
+@keyframes kit-shimmer {
+	from {
+		background-position: 200% 0;
+	}
+	to {
+		background-position: -200% 0;
+	}
+}
+
+@keyframes kit-blink {
+	0%,
+	45% {
+		opacity: 1;
+	}
+	50%,
+	95% {
+		opacity: 0;
+	}
+}
+
+@keyframes kit-breathe {
+	0%,
+	100% {
+		opacity: 0.45;
+		transform: scale(0.94);
+	}
+	50% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes kit-rise {
+	from {
+		opacity: 0;
+		transform: translateY(var(--kit-space-xs));
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes kit-sheet-in-left {
+	from {
+		transform: translateX(-100%);
+	}
+	to {
+		transform: none;
+	}
+}
+
+@keyframes kit-sheet-in-right {
+	from {
+		transform: translateX(100%);
+	}
+	to {
+		transform: none;
+	}
+}
+
+@keyframes kit-sheet-in-bottom {
+	from {
+		transform: translateY(100%);
+	}
+	to {
+		transform: none;
+	}
+}
+
+/* Overlays built on the platform <dialog>. The backdrop is the `overlay` theme
+   token, and each sheet slides from its own edge at the `slow` motion tier so
+   the movement matches GPUI Kit's sheet rather than a browser default. */
+.kit-dialog::backdrop,
+.kit-sheet::backdrop {
+	background-color: var(--kit-overlay);
+	animation: kit-fade-in var(--kit-duration-normal) var(--kit-ease-enter);
+}
+
+.kit-dialog[open] {
+	animation: kit-rise var(--kit-duration-normal) var(--kit-ease-enter);
+}
+
+.kit-sheet[data-side='left'] {
+	position: fixed;
+	inset: 0 auto 0 0;
+	height: 100dvh;
+}
+
+.kit-sheet[data-side='left'][open] {
+	animation: kit-sheet-in-left var(--kit-duration-slow) var(--kit-ease-enter);
+}
+
+.kit-sheet[data-side='right'] {
+	position: fixed;
+	inset: 0 0 0 auto;
+	height: 100dvh;
+}
+
+.kit-sheet[data-side='right'][open] {
+	animation: kit-sheet-in-right var(--kit-duration-slow) var(--kit-ease-enter);
+}
+
+.kit-sheet[data-side='bottom'] {
+	position: fixed;
+	inset: auto 0 0 0;
+	width: 100vw;
+	max-width: 100vw;
+	border-start-start-radius: var(--kit-radius-xl);
+	border-start-end-radius: var(--kit-radius-xl);
+	padding-bottom: env(safe-area-inset-bottom);
+}
+
+.kit-sheet[data-side='bottom'][open] {
+	animation: kit-sheet-in-bottom var(--kit-duration-slow) var(--kit-ease-enter);
+}
+
+@keyframes kit-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.kit-spin {
+	animation: kit-spin 0.8s linear infinite;
+}
+
+.kit-pulse {
+	animation: kit-pulse 1.4s var(--kit-ease-move) infinite;
+}
+
+.kit-shimmer {
+	background-image: linear-gradient(
+		90deg,
+		var(--kit-skeleton) 0%,
+		color-mix(in oklab, var(--kit-skeleton) 55%, var(--kit-foreground)) 50%,
+		var(--kit-skeleton) 100%
+	);
+	background-size: 200% 100%;
+	animation: kit-shimmer 1.6s linear infinite;
+}
+
+.kit-blink {
+	animation: kit-blink 1.1s steps(1, end) infinite;
+}
+
+.kit-breathe {
+	animation: kit-breathe 1.6s var(--kit-ease-move) infinite;
+}
+
+.kit-rise {
+	animation: kit-rise var(--kit-duration-normal) var(--kit-ease-enter) both;
+}
+
+/* Reduced motion removes the loops but keeps the end state legible: a spinner
+   stops spinning and shows a static ring, a shimmer shows a filled block. */
+@media (prefers-reduced-motion: reduce) {
+	.kit :where(.kit-spin, .kit-pulse, .kit-shimmer, .kit-blink, .kit-breathe, .kit-rise) {
+		animation: none;
+	}
+}
