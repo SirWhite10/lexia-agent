@@ -15,6 +15,15 @@ be judged in the browser. It is a preview surface, not a second design system:
 nothing outside `/kit` imports from here, and `kit.css` scopes every token to
 `.kit` so the Lexia design tokens in `src/routes/layout.css` are untouched.
 
+## Licence
+
+`gpui-component` and `gpui-base` are **Apache-2.0** (Zed Industries), and this
+directory is a derivative: theme tokens, component anatomy and the visual
+language are transcribed from those crates, not original work. Apache-2.0 §4
+asks a redistribution to carry that attribution and note any changes, which is
+what this file and the per-block comments in `kit.css` are for. Keep them with
+the port.
+
 
 ## Status
 
