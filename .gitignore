@@ -18,7 +18,7 @@ dist/
 .output/
 .eve/
 
-# Local EVE release/state data
+# Local Lexosa state data
 app-data/
 
 # OS

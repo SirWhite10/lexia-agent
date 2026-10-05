@@ -45,4 +45,4 @@ This decision covers conversation shape, memory corpus and write policy, persona
 
 - [WF-INV-001](WF-INV-001-eve-authored-structure-inventory.md) for the exact EVE tree.
 - [WF-IMP-003](WF-IMP-003-schema-cutover-messages-sub-agents-memory.md) → [WF-IMP-004](WF-IMP-004-memory-capture-distillation-and-retrieval.md) → [WF-IMP-005](WF-IMP-005-cache-stable-prompt-assembly.md); [WF-IMP-006](WF-IMP-006-sub-agent-management-surface.md) for the manager surface.
-- Promote this decision to ADR-0003 if desired: the data model is hard to reverse, surprising without context, and a real trade-off. Left to an explicit call.
+- Promote this decision to ADR-0004 if desired: the data model is hard to reverse, surprising without context, and a real trade-off. Left to an explicit call. (0003 was taken by [the EVE development runtime](../../adr/0003-eve-development-runtime.md).)
