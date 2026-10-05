@@ -5,6 +5,8 @@ Lexia is a server-side SvelteKit agent harness. Jev makes the first typed routin
 - `agent/` — EVE agent configuration, instructions, channels, tools, skills, and subagents. Planned; preserve EVE’s authored structure.
 - `src/` — SvelteKit application and server integration. Planned; clients contain access/UI concerns only.
 - `src/lib/components/ui/` — shadcn-svelte primitives. Planned.
+- `src/lib/components/kit/` — GPUI Kit browser port: component layer plus the crate's default theme, scoped to `.kit`. Web is alpha per [WF-DEC-003](docs/planning/tickets/WF-DEC-003-gpui-kit-forefront-web-alpha.md); this is the reference implementation and parity oracle for the GPUI Kit migration, not a shipping surface. Its README records the crate source for every value.
+- `src/routes/kit/` — UI test page: the chat interface, the live component set and the artifact gallery, at phone, tablet and desktop widths.
 - `src/lib/components/ai/` — Svelte-native AI interaction components. Planned.
 - `src/lib/components/features/` — Lexia feature compositions. Planned.
 - `src-tauri/` — Tauri desktop/mobile shell and native capabilities. Planned.
