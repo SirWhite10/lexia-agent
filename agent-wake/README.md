@@ -1,25 +1,23 @@
-# Agent sherpa-onnx wake-word test
+# Agent sherpa-onnx wake-word service
 
-An isolated Rust microphone prototype for checking whether sherpa-onnx can detect **“Lexia”** locally. It does not modify or depend on the agent app. The probe only prints a wake event; it does not record, transcribe, or send audio anywhere.
+A Rust microphone service that checks whether sherpa-onnx can detect a wake phrase locally. It does not modify or depend on the agent host. The probe only reports a wake event; it does not record, transcribe, or send audio anywhere.
+
+**Which phrase it listens for.** The phrases an agent answers to are the host's to declare: the service reads them from the host's `GET /api/agent` and spells each one into the detector's keyword file at startup. The platform default is `AGENT`. The bundled fixture says "Lexia", because that is the word the committed WAV contains, and the fixture checks the detection path rather than the phrase.
+
+**The prebuilt release is not carried in this repository.** The zip, the compiled binary and the model are fetched or built locally; see [Preparing the model](#preparing-the-model) and [Building](#building).
 
 ## Requirements
 
 - Rust/Cargo (stable)
 - A microphone and its OS permissions for live listening
 - Linux: ALSA development files for CPAL (`pkg-config` and `libasound2-dev` on Debian/Ubuntu)
-
-## Run the prebuilt Linux release
-
-The ZIP includes a compiled Linux x86-64 release, so you do not need Rust or Cargo to try live detection on a compatible Linux machine. From the extracted project directory:
-
-```sh
-chmod +x agent-wake
-./agent-wake
-```
-
-The binary is dynamically linked and needs glibc 2.34 or newer plus `libasound.so.2` (provided by ALSA compatibility/runtime packages on Bazzite and Arch). It was built on x86-64 Linux. The model files are included in the ZIP and are loaded relative to the project directory. If the binary does not match your system, use the source build below.
+- Python with `sentencepiece`, which is what spells a phrase the way the model's own vocabulary spells it
 
 ## Build from source
+
+The release binary is built here rather than carried: it is dynamically linked, needs glibc 2.34 or newer plus `libasound.so.2` (provided by ALSA compatibility/runtime packages on Bazzite and Arch), and was built on x86-64 Linux, so a binary from another machine is a guess about the user's system.
+
+## Prepare the model
 
 ```sh
 bash scripts/prepare-model.sh
@@ -28,17 +26,19 @@ cargo run --release
 
 On Windows PowerShell, run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\prepare-model.ps1` instead of the Bash setup script.
 
-The setup command downloads the English Zipformer keyword-spotting model (about 19 MB) if it is not already present. The project includes the pre-tokenized keyword list for “LEXIA,” so no model training or Python tooling is needed. The Rust crate downloads sherpa-onnx's matching native runtime during the first build.
+The setup command downloads the English Zipformer keyword-spotting model (about 19 MB) if it is not already present. The Rust crate downloads sherpa-onnx's matching native runtime during the first build.
 
-## Download over HTTP
+The keyword list holds the pre-tokenized phrase the detector matches. The service fills it from the host's declared phrases at startup; the committed file carries the fixture's phrase, “LEXIA”, because that is the word the committed WAV contains.
 
-The project ZIP includes the model, so it can be unpacked and tested without downloading the model again. Start the small Bun file server from this directory:
+## Serve the lab over HTTP
+
+Start the Bun server from this directory:
 
 ```sh
 bun run serve
 ```
 
-It listens on `0.0.0.0:8787` by default. Open `http://localhost:8787/` on this machine, or use its reachable address from another device. Set `PORT` or `HOST` to override the bind address. The server exposes only the project ZIP and a download page.
+It listens on `0.0.0.0:8787` by default. Open `http://localhost:8787/` on this machine, or use its reachable address from another device. Set `PORT` or `HOST` to override the bind address. The browser interface for the wake lab now lives in the agent host, which is where the signed-in user is.
 
 To test a mono, 16 kHz WAV file instead of the microphone:
 
@@ -349,4 +349,4 @@ With no match it prints `NO WAKE` and the same summary with `no wake word`, whic
 
 ## Model licensing
 
-The sherpa-onnx runtime is Apache-2.0. The selected model package identifies itself as Apache-2.0 as well; retain its notices and recheck the package terms before redistributing it with Lexia. This prototype downloads the model locally rather than committing or bundling it.
+The sherpa-onnx runtime is Apache-2.0. The selected model package identifies itself as Apache-2.0 as well; retain its notices and recheck the package terms before redistributing it with the agent platform. This prototype downloads the model locally rather than committing or bundling it.

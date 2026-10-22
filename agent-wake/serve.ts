@@ -6,7 +6,6 @@ import { staticWebResponse } from './server/static';
 import { createWebSocketHandler } from './server/wss';
 import { DetectorWorker } from './server/worker';
 
-const archivePath = new URL('./agent-wake.zip', import.meta.url);
 const host = Bun.env.HOST ?? '::';
 const port = Number(Bun.env.PORT ?? 8787);
 const worker = new DetectorWorker();
@@ -30,12 +29,9 @@ const server = Bun.serve({
 		if (url.pathname === '/api/fixture') return fixtureEndpoint(request, worker);
 		if (url.pathname === '/api/keywords') return keywordEndpoint(request, worker);
 		if (url.pathname === '/ws/audio') return websocket.fetch(request, bunServer) ?? new Response('WebSocket upgrade failed', { status: 400 });
-		if (url.pathname === '/agent-wake.zip') {
-			if (request.method !== 'GET' && request.method !== 'HEAD') return methodNotAllowed('GET, HEAD');
-			const archive = Bun.file(archivePath);
-			if (!(await archive.exists())) return new Response('ZIP not found', { status: 404 });
-			return new Response(request.method === 'HEAD' ? null : archive, { headers: { 'content-type': 'application/zip', 'content-disposition': 'attachment; filename="agent-wake.zip"', 'content-length': String(archive.size) } });
-		}
+		// The project ZIP is not carried in this repository, so there is no
+		// route for it. A route that answers 404 for a file that is deliberately
+		// absent is a route that looks like it works and does not.
 		const webResponse = await staticWebResponse(request);
 		if (webResponse) return webResponse;
 		return new Response('Not found', { status: 404 });

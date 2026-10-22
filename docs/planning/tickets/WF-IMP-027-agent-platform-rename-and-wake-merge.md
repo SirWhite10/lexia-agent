@@ -75,20 +75,27 @@ Phases 1 and 2 are done. The rename is committed as `4ba5270`, the snapshot as `
 
 **Done and verified**
 
-- The sibling is imported as `agent-wake/` (48 files, no zip, binary, `.venv-tools`, `target`, `models` or `.scratch`). The model is copied locally to test and is gitignored.
-- Wake identifiers renamed to `agent-wake`: env vars `AGENT_WAKE_*`, the worker `agent-wake-worker`, the systemd unit `agent-wake.service`, the fixture `agent-wake.wav`. Two double-rename faults found and fixed.
-- The keyword tests (5) pass. The detector fires on the fixture with its own phrase.
-- Phrase registry (`server/phrases.ts`): one agent holds several phrases, each mapped to a command. Refuses empty phrase lists, unspellable phrases, duplicate phrases and free-form command names. 7 tests pass.
-- On the real detector: with `AGENT` and `LEXIA` in one keyword file, "Hey agent" fires `AGENT` and the fixture fires `LEXIA`. Each maps to its own command.
-- Active-stream refusal already exists in the sibling (`hasActiveSessions` returns 409).
+- The sibling is imported as `agent-wake/` (52 files, no zip, binary, `.venv-tools`, `target`, `models` or `.scratch`). The model is copied locally to test and is gitignored.
+- Wake identifiers renamed to `agent-wake`: env vars `AGENT_WAKE_*`, the worker `agent-wake-worker`, the systemd unit `agent-wake.service`, the fixture `agent-wake.wav`. Three double-rename faults found and fixed.
+- **The phrases an agent answers to live in the manifest**, in a `[[wake]]` section: one agent holds several phrases, each mapped to a command. The host validates the section where the manifest is read, so a manifest that cannot work is refused at startup, and exposes it at `GET /api/agent`. Absent means the platform default, which is the path when setup is skipped.
+- **The wake service asks the host for them** rather than parsing the manifest itself. One authority means a phrase the host would refuse is never spelled into the detector. The service spells each phrase into the detector's keyword file, because the detector matches pre-spelled keywords, and reports a phrase the model cannot spell without costing the agent the others.
+- **A detection carries the command its phrase declares.** A keyword the agent does not answer to runs nothing rather than a default: a default would run the wrong thing.
+- **Verified by running it:** the host served the agent's phrases, the service spelled `AGENT` into the keyword file and restarted the detector, and the worker came up ready. 19 tests in the service, 76 in the host, 73 in the TypeScript host.
+- **The microphone is a capability now.** `audio_capture` is a variant in the closed enum, granted per agent and revocable through the consent ledger. The host owns the device: one capture session, shared by every granted plugin, opened lazily. Samples are mono f32 at 16 kHz whatever the device does natively. A device held by another process is reported as busy rather than answered with silence.
+- **Proven against a real guest** (`guests/audio`) and **against the real microphone on this host**: 18,422 samples in 1.22 s, about 15,100/s against the 16 kHz rate.
+- The ZIP route is removed. It served a file that is deliberately not carried, which is a route that looks like it works and does not.
 
 **Not done**
 
-- **Default phrase.** `AGENT` alone does not fire the detector at thresholds 0.25, 0.10 or 0.05. The phrase "Hey agent" fires at all three. The configured default stays `AGENT` as decided, but a single word is not a working wake word with this model. Decision needed: a phrase, or a different model.
-- **Svelte UI port.** Not started. The sibling page is one large component (about 2,000 lines across `web/`). It needs a deliberate rebuild in the host's shell, not a copy. `web/` stays in place until the route exists.
+- **Svelte UI port.** In progress. The sibling page is one large component (about 2,000 lines across `web/`). It is being rebuilt in the host's shell rather than copied, and `web/` stays in place until the route exists.
 - **Host credentials.** The host login (`src/routes/(auth)/login`) already supports users, setup and recovery. The sibling's env-credential login is removed when the port is done.
-- **audio.capture.** Not added. Needs a consent-model decision, granted per agent.
 - **Coverage gap.** The sibling has no tests for its audio transport or capture path.
-- **Production origin.** `lexia.dlx.studio` is a live domain and is deliberately not renamed. It appears in `deploy/`, `server/audio.ts`, `serve.ts` and the README.
 
-WF-IMP-027 is not complete.
+**Deliberately unchanged**
+
+- **The wake phrase in the fixture.** The committed WAV says "Lexia", and the fixture checks the detection path rather than the phrase. The platform default is `AGENT`.
+- **The production origin.** `lexia.dlx.studio` is a live domain. Renaming it means changing DNS and the tunnel, which is the operator's action. It appears in `deploy/`, `server/audio.ts`, `serve.ts` and the README.
+
+**One finding worth keeping**
+
+`AGENT` alone does not fire the detector, at thresholds 0.25, 0.10 or 0.05. "Hey agent" fires at all three, and the detector reports the keyword `AGENT` either way, so the mapping is unaffected. What failed is an *isolated* utterance, while the phrase in context fires. The model wants context around the keyword, which is what a person saying "Agent, do this" naturally provides. A recording of a real voice is still the honest test; the synthetic clips only prove the pipeline.
