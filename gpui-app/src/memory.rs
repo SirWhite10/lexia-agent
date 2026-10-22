@@ -418,10 +418,10 @@ impl MemoryStore {
         }
         let mut previous: std::collections::HashMap<String, String> = std::collections::HashMap::new();
         for line in self.load_personality().lines() {
-            if let Some(rest) = line.strip_prefix("- [") {
-                if let Some((stamp, trait_text)) = rest.split_once("] ") {
-                    previous.insert(trait_text.to_string(), stamp.to_string());
-                }
+            if let Some(rest) = line.strip_prefix("- [")
+                && let Some((stamp, trait_text)) = rest.split_once("] ")
+            {
+                previous.insert(trait_text.to_string(), stamp.to_string());
             }
         }
         let stamp = Self::now();
@@ -629,7 +629,9 @@ fn vector_bytes(vector: &[f32]) -> Vec<u8> {
 
 fn bytes_to_vector(bytes: &[u8]) -> Vec<f32> {
     bytes
-        .chunks_exact(4)
+        .as_chunks::<4>()
+        .0
+        .iter()
         .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
         .collect()
 }
