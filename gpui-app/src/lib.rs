@@ -30,6 +30,7 @@ pub mod prompt;
 pub mod runs;
 pub mod skills;
 pub mod state;
+pub mod thought;
 pub mod turn;
 
 pub use config::AgentConfig;

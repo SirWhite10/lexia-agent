@@ -93,6 +93,47 @@ pub trait Embedder: Send + Sync {
     async fn embed(&self, text: &str) -> std::result::Result<Option<Vec<f32>>, String>;
 }
 
+/// An embedder that goes through the provider abstraction.
+///
+/// The corpus is never indexed against one vendor's endpoint by accident: the
+/// embedding goes through the same `ModelProvider` the completions do, so a
+/// provider that cannot serve embeddings is a provider the host reports rather
+/// than a second, hidden integration.
+pub struct ProviderEmbedder<'a> {
+    provider: &'a dyn crate::models::ModelProvider,
+    credential: crate::error::Secret,
+    model: String,
+}
+
+impl<'a> ProviderEmbedder<'a> {
+    pub fn new(
+        provider: &'a dyn crate::models::ModelProvider,
+        credential: crate::error::Secret,
+        model: &str,
+    ) -> Self {
+        Self {
+            provider,
+            credential,
+            model: model.to_string(),
+        }
+    }
+}
+
+#[async_trait]
+impl Embedder for ProviderEmbedder<'_> {
+    fn model(&self) -> &str {
+        &self.model
+    }
+
+    async fn embed(&self, text: &str) -> std::result::Result<Option<Vec<f32>>, String> {
+        self.provider
+            .embed(&self.credential, &self.model, text)
+            .await
+            .map(Some)
+            .map_err(|error| error.to_string())
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct ReindexResult {
     pub reindexed: usize,

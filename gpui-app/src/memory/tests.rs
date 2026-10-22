@@ -128,6 +128,71 @@ fn bodies(entries: &[MemoryEntry]) -> Vec<String> {
     entries.iter().map(|entry| entry.body.clone()).collect()
 }
 
+/// The corpus is indexed through the provider abstraction, not against one
+/// vendor's endpoint by accident.
+#[tokio::test]
+async fn the_embedder_goes_through_the_provider_abstraction() {
+    use crate::error::Secret;
+    use crate::models::{Modality, ModelProvider, TranscriptionRequest};
+
+    struct FakeProvider;
+    #[async_trait]
+    impl ModelProvider for FakeProvider {
+        fn id(&self) -> &str {
+            "fake"
+        }
+        fn modalities(&self) -> Vec<Modality> {
+            vec![Modality::Text]
+        }
+        async fn complete(
+            &self,
+            _credential: &Secret,
+            _request: crate::models::CompletionRequest,
+        ) -> crate::error::Result<crate::models::Completion> {
+            unimplemented!("the embedder does not complete anything")
+        }
+        fn stream(
+            &self,
+            _credential: Secret,
+            _request: crate::models::CompletionRequest,
+        ) -> futures_util::stream::BoxStream<'static, crate::error::Result<crate::models::StreamEvent>> {
+            unimplemented!("the embedder does not stream anything")
+        }
+        async fn catalogue(
+            &self,
+            _credential: &Secret,
+        ) -> crate::error::Result<Vec<crate::models::ModelInfo>> {
+            Ok(Vec::new())
+        }
+        async fn transcribe(
+            &self,
+            _credential: &Secret,
+            _request: TranscriptionRequest,
+        ) -> crate::error::Result<String> {
+            unimplemented!("the embedder does not transcribe anything")
+        }
+        async fn embed(
+            &self,
+            _credential: &Secret,
+            model: &str,
+            text: &str,
+        ) -> crate::error::Result<Vec<f32>> {
+            assert_eq!(model, "fake/embed");
+            Ok(vec![text.len() as f32, 0.0, 0.0])
+        }
+    }
+
+    let provider = FakeProvider;
+    let embedder = ProviderEmbedder::new(&provider, Secret::new("key".into()), "fake/embed");
+    assert_eq!(embedder.model(), "fake/embed");
+    let vector = embedder
+        .embed("hello")
+        .await
+        .expect("the provider embeds")
+        .expect("there is a vector");
+    assert_eq!(vector, vec![5.0, 0.0, 0.0]);
+}
+
 #[tokio::test]
 async fn ranks_by_cosine_similarity_within_the_role_card_scope() {
     let scratch = Scratch::new("rank");

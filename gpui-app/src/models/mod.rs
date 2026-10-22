@@ -200,4 +200,14 @@ pub trait ModelProvider: Send + Sync {
         credential: &Secret,
         request: TranscriptionRequest,
     ) -> Result<String>;
+
+    /// Embed a body. The model id travels with the call rather than being
+    /// assumed: a vector indexed under one model is invisible to a caller
+    /// using another, and comparing them returns confident nonsense.
+    async fn embed(
+        &self,
+        credential: &Secret,
+        model: &str,
+        text: &str,
+    ) -> Result<Vec<f32>>;
 }

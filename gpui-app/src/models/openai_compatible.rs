@@ -500,6 +500,44 @@ impl ModelProvider for OpenAiCompatible {
             Err(_) => Ok(text),
         }
     }
+
+    /// The embeddings endpoint, in the shape every OpenAI-compatible API
+    /// serves. The response carries the vector under `data[0].embedding`.
+    async fn embed(&self, credential: &Secret, model: &str, text: &str) -> Result<Vec<f32>> {
+        let response = self
+            .client
+            .post(self.url("/embeddings"))
+            .bearer_auth(credential.expose())
+            .json(&json!({ "model": model, "input": text }))
+            .send()
+            .await
+            .map_err(|e| Error::ProviderUnreachable {
+                provider: self.id.clone(),
+                reason: e.to_string(),
+            })?;
+
+        let status = response.status().as_u16();
+        let body = response.text().await.unwrap_or_default();
+        if !(200..300).contains(&status) {
+            return Err(self.status_error(status, truncate(&body)));
+        }
+        let payload: Value =
+            serde_json::from_str(&body).map_err(|e| self.status_error(status, e.to_string()))?;
+        payload["data"][0]["embedding"]
+            .as_array()
+            .map(|values| {
+                values
+                    .iter()
+                    .filter_map(|value| value.as_f64())
+                    .map(|value| value as f32)
+                    .collect()
+            })
+            .ok_or_else(|| Error::ProviderStatus {
+                provider: self.id.clone(),
+                status,
+                body: "the response carried no embedding".into(),
+            })
+    }
 }
 
 impl OpenAiCompatible {
