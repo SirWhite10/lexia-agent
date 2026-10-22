@@ -1,0 +1,24 @@
+[Unit]
+Description=Agent sherpa-onnx browser WSS test host
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=admin
+Group=admin
+WorkingDirectory=/home/admin/development/agent-wake
+Environment=HOST=::
+Environment=PORT=8787
+Environment=PUBLIC_ORIGIN=https://lexia.dlx.studio
+Environment=ALLOWED_ORIGINS=https://lexia.dlx.studio,http://localhost:8787,http://127.0.0.1:8787
+EnvironmentFile=-/etc/agent-wake.env
+ExecStart=/home/admin/.bun/bin/bun run serve
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

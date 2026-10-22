@@ -1,0 +1,7 @@
+/target/
+/.venv-tools/
+/models/
+/web/node_modules/
+/web/.svelte-kit/
+/web/build/
+/web/bun.lock
