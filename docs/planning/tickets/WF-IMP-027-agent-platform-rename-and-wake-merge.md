@@ -103,3 +103,5 @@ Phases 1 and 2 are done. The rename is committed as `4ba5270`, the snapshot as `
 **One finding worth keeping**
 
 `AGENT` alone does not fire the detector, at thresholds 0.25, 0.10 or 0.05. "Hey agent" fires at all three, and the detector reports the keyword `AGENT` either way, so the mapping is unaffected. What failed is an *isolated* utterance, while the phrase in context fires. The model wants context around the keyword, which is what a person saying "Agent, do this" naturally provides. A recording of a real voice is still the honest test; the synthetic clips only prove the pipeline.
+
+The bundled fixture now says "Hey agent" rather than the old product's name, so the committed WAV fires the platform's default phrase: the service's own fixture check answers `detected: true, keyword: "AGENT"`. It was generated with the same eSpeak NG 1.52.0 the previous fixture used, and its provenance is documented in `agent-wake/assets/fixtures/README.md` the same way.
