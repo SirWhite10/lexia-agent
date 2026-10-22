@@ -170,6 +170,44 @@ pub struct TranscriptionRequest {
     pub language: Option<String>,
 }
 
+
+/// The modalities a manifest entry declares, as the model layer's own.
+pub fn modalities_of(names: &[String]) -> Vec<Modality> {
+    names
+        .iter()
+        .filter_map(|name| match name.as_str() {
+            "text" => Some(Modality::Text),
+            "embeddings" => Some(Modality::Embeddings),
+            "audio" => Some(Modality::Audio),
+            "image" => Some(Modality::Image),
+            _ => None,
+        })
+        .collect()
+}
+
+/// Build the provider a manifest entry names.
+///
+/// A manifest type with no adapter behind it is an error, not a silent
+/// fallback: an operator who configured an Anthropic provider should be told
+/// the host cannot serve it, not handed a different provider's answers.
+pub fn provider_for(provider: &crate::config::Provider) -> Result<Box<dyn ModelProvider>> {
+    match provider.kind {
+        crate::config::ProviderKind::OpenaiCompatible => Ok(Box::new(OpenAiCompatible::new(
+            provider.id.clone(),
+            provider.endpoint.clone(),
+            modalities_of(&provider.modalities),
+        )?)),
+        crate::config::ProviderKind::Anthropic => Err(crate::error::Error::State(format!(
+            "the `anthropic` provider type has no adapter yet; `{}` cannot be served",
+            provider.id
+        ))),
+        crate::config::ProviderKind::Local => Err(crate::error::Error::State(format!(
+            "the `local` provider type has no adapter yet; `{}` cannot be served",
+            provider.id
+        ))),
+    }
+}
+
 #[async_trait]
 pub trait ModelProvider: Send + Sync {
     /// Stable identifier, matching the manifest.

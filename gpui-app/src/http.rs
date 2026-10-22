@@ -10,6 +10,7 @@
 //! path that exists but cannot answer is worse than a path that does not exist,
 //! because a client will build against it.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use axum::Json;
@@ -81,12 +82,27 @@ pub struct AppState {
     pub state_dir: StateDir,
     pub events: broadcast::Sender<ServerEvent>,
     pub version: &'static str,
+    /// The memory corpus: facts, the log and the vector index.
+    pub memory: Arc<crate::memory::MemoryStore>,
+    /// The standing sub-agents and the message log.
+    pub sub_agents: Arc<crate::subagents::SubAgentStore>,
+    /// The prompt assembler. It holds the cursor that makes the cache prefix
+    /// contract work, so there is exactly one of them.
+    ///
+    /// An async mutex, because the assembler is held across the retrieval that
+    /// assembles the prompt, and a guard held across an await has to be Send.
+    pub prompt: Arc<tokio::sync::Mutex<crate::prompt::PromptAssembler>>,
+    /// The agent's skills, read from its directory.
+    pub skills: Arc<crate::skills::SkillIndex>,
+    /// The agent's directory. The memory store writes its facts there.
+    pub agent_dir: PathBuf,
 }
 
 pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health))
         .route("/api/agent", get(describe_agent))
+        .route("/api/turn", post(run_turn))
         .route("/api/providers", get(list_providers))
         .route("/api/providers/{id}/credential", put(set_credential))
         .route("/api/models", get(list_models))
@@ -249,6 +265,225 @@ async fn set_credential(
         credential: status.source.into(),
         shadowed_file: status.shadowed_file,
         removed_but_still_in_force: removed && status.source == crate::credentials::Source::Environment,
+    }))
+}
+
+
+#[derive(Deserialize)]
+struct TurnInput {
+    #[serde(rename = "messageId")]
+    message_id: Option<String>,
+    body: String,
+}
+
+#[derive(Serialize)]
+struct TurnResponse {
+    #[serde(rename = "runId")]
+    run_id: String,
+    #[serde(rename = "messageId")]
+    message_id: String,
+    /// How many memories were injected. Zero on a degraded turn.
+    #[serde(rename = "memoryHits")]
+    memory_hits: usize,
+    /// True when the turn went out without memory, because the provider could
+    /// not be reached or had no credential.
+    degraded: bool,
+    /// Why the reply did not happen, when it did not. A turn that failed is a
+    /// reachable state, not a blank conversation.
+    #[serde(rename = "replyFailed")]
+    reply_failed: Option<String>,
+}
+
+/// The model a turn uses. Anything unlisted falls through to `always`, so the
+/// fallback is the use-case named that and not the first one in the file.
+fn model_for_turn(config: &AgentConfig) -> Option<&crate::config::UseCase> {
+    config
+        .use_cases
+        .iter()
+        .find(|use_case| use_case.id == "always")
+        .or_else(|| config.use_cases.first())
+}
+
+/// The provider and credential a turn runs on, when there are any.
+///
+/// A missing credential is not an error here. The turn still goes out: it has
+/// no memory and no answer, and says so, rather than refusing to exist.
+fn turn_provider(
+    config: &AgentConfig,
+    credentials: &Credentials,
+) -> Option<(Box<dyn crate::models::ModelProvider>, crate::error::Secret)> {
+    let use_case = model_for_turn(config)?;
+    let (provider_id, _) = crate::config::split_model(&use_case.model);
+    let provider_id = provider_id?;
+    let provider = config.provider(provider_id)?;
+    let credential = credentials.resolve(provider).ok()?;
+    let adapter = crate::models::provider_for(provider).ok()?;
+    Some((adapter, credential))
+}
+
+/// One turn: capture it, prepare the prompt, plan the run, answer it, and run
+/// whatever the plan left behind.
+async fn run_turn(
+    State(state): State<AppState>,
+    Json(input): Json<TurnInput>,
+) -> Result<Json<TurnResponse>, ApiError> {
+    let body = input.body.trim().to_string();
+    if body.is_empty() {
+        return Err(ApiError::bad_plan("a turn needs a body".to_string()));
+    }
+    let config = state.config.read().await.clone();
+    let message_id = input
+        .message_id
+        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+
+    // The provider, with the credential in force.
+    let (provider, credential) = match turn_provider(&config, &state.credentials) {
+        Some((provider, credential)) => (Some(provider), Some(credential)),
+        None => (None, None),
+    };
+
+    // The embedder goes through the same provider the completion does, so the
+    // corpus is never indexed against a different endpoint than the one the
+    // turn is answered by.
+    // The embedder resolves its own credential. A `Secret` is not cloned, and
+    // the embedder has to own one for as long as it lives.
+    let embedder: Option<Box<dyn crate::memory::Embedder>> = match &provider {
+        Some(provider) => {
+            let resolved = model_for_turn(&config).and_then(|use_case| {
+                let (provider_id, _) = crate::config::split_model(&use_case.model);
+                provider_id
+                    .and_then(|id| config.provider(id))
+                    .and_then(|provider| state.credentials.resolve(provider).ok())
+            });
+            match resolved {
+                Some(credential) => Some(Box::new(crate::memory::ProviderEmbedder::new(
+                    provider.as_ref(),
+                    credential,
+                    crate::turn::EMBEDDING_MODEL,
+                ))),
+                None => None,
+            }
+        }
+        None => None,
+    };
+
+    // Capture the turn, then assemble the prompt around it.
+    let captured = crate::turn::capture_turn(
+        &state.memory,
+        embedder.as_deref(),
+        &message_id,
+        &body,
+    )
+    .await
+    .map_err(ApiError::from)?;
+
+    let skill_text: Vec<String> = state.skills.skills().iter().map(|s| s.body.clone()).collect();
+    let mut assembler = state.prompt.lock().await;
+    let turn = crate::turn::prepare_turn(
+        &state.memory,
+        &mut assembler,
+        embedder.as_deref(),
+        &skill_text,
+        &body,
+        None,
+    )
+    .await;
+    drop(assembler);
+
+    // The decision, and the run graph behind it.
+    let plan = crate::router::plan_turn(&body);
+    let planned = crate::agent_loop::plan_run(
+        &state.runs,
+        &state.sub_agents,
+        &plan,
+        &body,
+        Some(&message_id),
+    )
+    .map_err(ApiError::from)?;
+
+    // The reply. It is claimed, answered, and recorded — or it fails with a
+    // reason the client can show.
+    let reply_id = planned.actions[0].id.clone();
+    let mut reply_failed = None;
+    if let Some(lease) = state
+        .runs
+        .claim_action(&reply_id, crate::agent_loop::LEASE_TTL_MS)
+        .map_err(ApiError::from)?
+    {
+        let model = model_for_turn(&config).map(|use_case| use_case.model.clone());
+        let (provider_id, model_id) = model
+            .as_deref()
+            .map(crate::config::split_model)
+            .map(|(provider, model)| (provider.map(str::to_string), model.to_string()))
+            .unwrap_or((None, String::new()));
+
+        let outcome: std::result::Result<String, String> = match (&provider, &credential, provider_id) {
+            (Some(provider), Some(credential), Some(_)) => {
+                let request = crate::models::CompletionRequest {
+                    model: model_id,
+                    messages: vec![
+                        crate::models::Message::system(turn.prompt.system.clone()),
+                        crate::models::Message::user(body.clone()),
+                    ],
+                    tools: Vec::new(),
+                    response_schema: None,
+                    temperature: None,
+                    max_tokens: None,
+                    context_window: None,
+                };
+                provider
+                    .complete(credential, request)
+                    .await
+                    .map(|completion| completion.text)
+                    .map_err(|error| error.to_string())
+            }
+            _ => Err(
+                "no model is configured with a credential in force".to_string(),
+            ),
+        };
+
+        match outcome {
+            Ok(answer) => {
+                let _ = state.sub_agents.append_message(
+                    crate::subagents::MessageAuthorKind::Agent,
+                    None,
+                    None,
+                    Some(&planned.run.id),
+                    &answer,
+                );
+                let _ = state
+                    .runs
+                    .complete_action(&reply_id, &lease.lease_id, &answer);
+            }
+            Err(reason) => {
+                reply_failed = Some(reason.clone());
+                let _ = state
+                    .runs
+                    .fail_action(&reply_id, &lease.lease_id, &reason);
+            }
+        }
+    }
+
+    // Whatever the plan left behind that this host can run.
+    let _ = crate::agent_loop::dispatch_queued_actions(
+        &state.runs,
+        &state.state_dir.root().to_path_buf(),
+        &planned.run.id,
+    )
+    .await;
+
+    // Reflection is a boundary effect: it may distil facts and traits, but it
+    // never decides whether this turn succeeded.
+    let transcript = state.sub_agents.transcript(20).unwrap_or_default();
+    let _ = crate::turn::maybe_reflect(&state.memory, None, &transcript).await;
+
+    let _ = captured;
+    Ok(Json(TurnResponse {
+        run_id: planned.run.id,
+        message_id,
+        memory_hits: turn.memory.len(),
+        degraded: turn.degraded,
+        reply_failed,
     }))
 }
 
@@ -910,6 +1145,18 @@ summary = "Many labs behind one key."
             uuid::Uuid::new_v4()
         ));
         let state = StateDir::ensure(&directory).expect("state directory");
+        // The memory corpus and the standing sub-agents are the agent's own.
+        let memory = Arc::new(
+            crate::memory::MemoryStore::open(state.root(), &state.root().join("agent"))
+                .expect("the memory store opens"),
+        );
+        let sub_agents = Arc::new(
+            crate::subagents::SubAgentStore::open(&state.root().join("subagents.sqlite"))
+                .expect("the sub-agent store opens"),
+        );
+        let skills = Arc::new(crate::skills::SkillIndex::default());
+        let agent_dir = state.root().join("agent");
+
         let app_state = AppState {
             config: Arc::new(RwLock::new(
                 crate::AgentConfig::parse(config).expect("manifest"),
@@ -929,6 +1176,13 @@ summary = "Many labs behind one key."
             state_dir: state,
             events: event_channel(),
             version: env!("CARGO_PKG_VERSION"),
+            memory,
+            sub_agents,
+            prompt: Arc::new(tokio::sync::Mutex::new(
+                crate::prompt::PromptAssembler::new(),
+            )),
+            skills,
+            agent_dir,
         };
         (app_state, directory)
     }

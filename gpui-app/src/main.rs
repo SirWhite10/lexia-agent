@@ -100,7 +100,9 @@ async fn main() -> Result<()> {
     };
 
     match cli.command {
-        Command::Serve { bind } => serve(load_config()?, cli.state_dir, bind).await,
+        Command::Serve { bind } => {
+            serve(load_config()?, cli.state_dir, agent_dir, bind).await
+        }
         Command::Config => {
             println!("{}", toml::to_string_pretty(&load_config()?)?);
             Ok(())
@@ -221,7 +223,12 @@ async fn main() -> Result<()> {
     }
 }
 
-async fn serve(config: AgentConfig, state_dir: PathBuf, bind: String) -> Result<()> {
+async fn serve(
+    config: AgentConfig,
+    state_dir: PathBuf,
+    agent_dir: PathBuf,
+    bind: String,
+) -> Result<()> {
     let state = StateDir::ensure(&state_dir)
         .with_context(|| format!("preparing state directory {}", state_dir.display()))?;
     let credentials = Arc::new(Credentials::new(state.clone()));
@@ -243,6 +250,15 @@ async fn serve(config: AgentConfig, state_dir: PathBuf, bind: String) -> Result<
 
     let plugins = Arc::new(PluginHost::new(Registry::open(state.plugins_directory())?)?);
 
+    // The memory corpus and the standing sub-agents are the agent's own, so
+    // the facts land in the agent's directory and the index in the state
+    // directory beside the other stores the host owns.
+    let memory = Arc::new(agent_host::memory::MemoryStore::open(state.root(), &agent_dir)?);
+    let sub_agents = Arc::new(agent_host::subagents::SubAgentStore::open(
+        &state.root().join("subagents.sqlite"),
+    )?);
+    let skills = Arc::new(agent_host::skills::SkillIndex::load(&agent_dir.join("skills"))?);
+
     let app_state = AppState {
         config: Arc::new(RwLock::new(config)),
         plugins,
@@ -251,6 +267,11 @@ async fn serve(config: AgentConfig, state_dir: PathBuf, bind: String) -> Result<
         state_dir: state,
         events: events.clone(),
         version: env!("CARGO_PKG_VERSION"),
+        memory,
+        sub_agents,
+        prompt: Arc::new(tokio::sync::Mutex::new(agent_host::prompt::PromptAssembler::new())),
+        skills,
+        agent_dir,
     };
 
     let listener = tokio::net::TcpListener::bind(&bind)

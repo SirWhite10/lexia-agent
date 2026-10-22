@@ -25,7 +25,7 @@ use crate::runs::{Action, Coordinator, ExecutionMode, NewAction, NewRun, Run};
 use crate::subagents::{RoleCard, SubAgentStore};
 
 /// How long a claimed action's lease lasts.
-const LEASE_TTL_MS: i64 = 120_000;
+pub const LEASE_TTL_MS: i64 = 120_000;
 
 /// The run graph a turn produced.
 #[derive(Debug, Clone)]
