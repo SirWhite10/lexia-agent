@@ -119,6 +119,7 @@ async fn a_captured_turn_is_retrieved_by_a_later_turn() {
         &store,
         &mut assembler,
         Some(&embedder),
+        &[],
         "turn off the bedroom lights",
         None,
     )
@@ -131,6 +132,56 @@ async fn a_captured_turn_is_retrieved_by_a_later_turn() {
         "the retrieved memory is in the prompt: {}",
         turn.prompt.system
     );
+}
+
+/// The skills are injected in full, and they are in the cache prefix: adding a
+/// skill changes the prompt without a rebuild, and the prefix digest moves
+/// once, at the change.
+#[tokio::test]
+async fn the_skills_are_injected_in_full_and_they_move_the_prefix() {
+    let scratch = Scratch::new("skills");
+    let store = scratch.store();
+    let embedder = FixedEmbedder::new(EMBEDDING_MODEL);
+    let mut assembler = PromptAssembler::new();
+
+    let skills = vec!["# Skill: lights\nOperate the smart home.".to_string()];
+    let turn = prepare_turn(
+        &store,
+        &mut assembler,
+        Some(&embedder),
+        &skills,
+        "anything",
+        None,
+    )
+    .await;
+    assert!(
+        turn.prompt.system.contains("# Skill: lights"),
+        "the skill is in the prompt: {}",
+        turn.prompt.system
+    );
+    let first_digest = turn.prompt.prefix_digest.clone();
+
+    // The same skills, a later turn: the prefix is unchanged.
+    let again = prepare_turn(
+        &store,
+        &mut assembler,
+        Some(&embedder),
+        &skills,
+        "anything else",
+        None,
+    )
+    .await;
+    assert!(again.prompt.prefix_stable);
+    assert_eq!(again.prompt.prefix_digest, first_digest);
+
+    // A new skill moves the prefix once.
+    let mut more = skills.clone();
+    more.push("# Skill: calendar\nRead and write events.".to_string());
+    let changed = prepare_turn(&store, &mut assembler, Some(&embedder), &more, "anything", None).await;
+    assert!(!changed.prompt.prefix_stable, "a new skill moves the prefix");
+    let after = prepare_turn(&store, &mut assembler, Some(&embedder), &more, "anything", None).await;
+    assert!(after.prompt.prefix_stable);
+    assert_eq!(after.prompt.prefix_digest, changed.prompt.prefix_digest);
 }
 
 /// Reflection fires on its boundary and not off it. The counter comes from the
@@ -208,7 +259,7 @@ async fn a_provider_failure_degrades_to_an_empty_memory_block() {
     let broken = FixedEmbedder::new(EMBEDDING_MODEL).broken();
     let mut assembler = PromptAssembler::new();
 
-    let turn = prepare_turn(&store, &mut assembler, Some(&broken), "anything", None).await;
+    let turn = prepare_turn(&store, &mut assembler, Some(&broken), &[], "anything", None).await;
     assert!(turn.degraded, "the turn says it degraded");
     assert!(turn.memory.is_empty());
     assert!(
@@ -233,7 +284,7 @@ async fn a_turn_without_a_provider_still_goes_out() {
     let scratch = Scratch::new("nokey");
     let store = scratch.store();
     let mut assembler = PromptAssembler::new();
-    let turn = prepare_turn(&store, &mut assembler, None, "anything", None).await;
+    let turn = prepare_turn(&store, &mut assembler, None, &[], "anything", None).await;
     assert!(turn.degraded);
     assert_eq!(turn.prompt.system, "");
 }

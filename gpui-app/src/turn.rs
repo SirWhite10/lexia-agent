@@ -39,14 +39,16 @@ pub struct Turn {
 /// slot that changes between reflection boundaries, so the cache prefix stays
 /// byte-stable while memory varies per request.
 ///
-/// The skill and tool slots are empty here because nothing populates them yet:
-/// the skill index and the resolved tools belong to the agent loop
+/// The skills are injected in full, in the prefix, and the tools slot is
+/// empty because nothing populates it yet: the resolved tools belong to the
+/// agent loop
 /// ([WF-IMP-023](../../docs/planning/tickets/WF-IMP-023-agent-loop-sub-agents-and-builtins.md)),
 /// which is what decides what a turn may do.
 pub async fn prepare_turn(
     store: &MemoryStore,
     assembler: &mut PromptAssembler,
     embedder: Option<&dyn Embedder>,
+    skills: &[String],
     query: &str,
     scope: Option<&str>,
 ) -> Turn {
@@ -72,7 +74,7 @@ pub async fn prepare_turn(
             Turn {
                 prompt: assembler.assemble(&PromptSlots {
                     personality: Some(store.load_personality()),
-                    skills: Vec::new(),
+                    skills: skills.to_vec(),
                     memory: bodies,
                     tools: Vec::new(),
                 }),
