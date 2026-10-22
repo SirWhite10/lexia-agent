@@ -26,6 +26,7 @@ pub mod http;
 pub mod memory;
 pub mod models;
 pub mod plugins;
+pub mod registry;
 pub mod prompt;
 pub mod runs;
 pub mod skills;
@@ -79,6 +80,40 @@ profile = "standard"
         assert_eq!(config.agent.name, "agent");
         assert_eq!(config.sandbox.profile, "standard");
         assert!(config.providers.is_empty());
+    }
+
+    /// The registry is the authority on what exists. A manifest naming a
+    /// capability it does not hold is refused with that name in the error,
+    /// rather than silently narrowed to the ones that exist.
+    #[test]
+    fn a_capability_the_registry_does_not_know_is_refused_by_name() {
+        let text = format!(
+            "{MINIMAL}{}",
+            r#"
+[capabilities]
+allow = ["chat.reply", "chat.ack"]
+"#
+        );
+        let error = AgentConfig::parse(&text).expect_err("an unknown capability must not parse");
+        let message = error.to_string();
+        assert!(message.contains("chat.ack"), "the name is in the error: {message}");
+        assert!(message.contains("registry knows"), "{message}");
+    }
+
+    #[test]
+    fn the_capabilities_the_registry_holds_are_accepted() {
+        let text = format!(
+            "{MINIMAL}{}",
+            r#"
+[capabilities]
+allow = ["chat.reply", "note.write", "subagent.spawn", "file.read", "artifact.write", "memory.write"]
+deny = ["shell.exec"]
+"#
+        );
+        // `shell.exec` is not in the registry, so this one is refused too --
+        // which is the point: the deny list is checked the same way.
+        let error = AgentConfig::parse(&text).expect_err("an unknown capability must not parse");
+        assert!(error.to_string().contains("shell.exec"), "{error}");
     }
 
     /// A manifest that says nothing about waking still has to wake to

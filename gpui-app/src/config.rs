@@ -301,6 +301,30 @@ impl AgentConfig {
             ));
         }
 
+        // A capability the registry does not know is a typo. A typo that was
+        // silently narrowed would leave a manifest that says one thing and
+        // means another, and nothing would report it: the agent would run with
+        // fewer capabilities than its file claims.
+        //
+        // `require` is checked against the vocabulary here and against
+        // *availability* at startup, which is a separate question: a required
+        // capability the registry knows but nothing provides yet is a startup
+        // gate failing, not a vocabulary error.
+        for (list, names) in [
+            ("allow", &self.capabilities.allow),
+            ("deny", &self.capabilities.deny),
+            ("require", &self.capabilities.require),
+        ] {
+            for name in names {
+                if !crate::registry::Capability::is_known(name) {
+                    return Err(ConfigError::Invalid(format!(
+                        "capability `{name}` in `{list}` is not one the registry knows. The registry holds: {}",
+                        crate::registry::Capability::names().join(", ")
+                    )));
+                }
+            }
+        }
+
         // A wake phrase is uppercase, one to sixty-four characters, and a
         // command is a plain command name. Both are checked here so a manifest
         // that cannot work is refused at startup rather than at the moment
