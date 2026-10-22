@@ -91,4 +91,44 @@ Both appear to the agent loop as the same capability, which is what lets a built
 
 ## Progress
 
-Not started.
+The foundations are in the binary and tested. The loop itself is not: nothing
+drives a turn from a request yet.
+
+**Done and verified**
+
+- **`gpui-app/src/registry.rs` — the capability registry.** The authority on
+  what exists. It holds the six capabilities the composer already offers, plus
+  `note.write`, so the composer and the registry are one list rather than two
+  that drifted. A manifest naming a capability the registry does not know is
+  refused with that name in the error, in `allow`, `deny` and `require` alike:
+  a silent narrowing would leave a manifest that says one thing and means
+  another, and nothing would report it.
+- **`gpui-app/src/builtins.rs` — the builtin capabilities.** `note.write`
+  appends a file a person can read; `chat.reply` records the reply. Both are
+  real local side effects, deliberately boring so the execution contract can be
+  proved without coupling to a provider. A capability the host does not
+  provide resolves to nothing rather than to an error, because it may be a
+  plugin's.
+- **`gpui-app/src/router.rs` — the turn router.** It reads a request and
+  decides the run graph behind it. `tests/planner.test.ts` passes against it,
+  case for case. The decision is one typed value behind a seam, so the router
+  that replaces it can read the thought tree and nothing downstream changes.
+  The original was regular expressions with lazy quantifiers the `regex` crate
+  cannot express, so this matches word sequences instead; the one behaviour
+  that differs is that whitespace inside a phrase is not significant here.
+- **`gpui-app/src/subagents.rs` — the standing sub-agents.** The role card, the
+  prompt versions and the message log the reflection reads. A revised prompt
+  creates a version and never overwrites one, and retirement archives: there
+  is no delete path in the module at all, deliberately.
+
+**Not done**
+
+- **The plan → run graph → actions.** The router produces a decision and
+  nothing yet turns it into a run with its actions in the coordinator. The
+  TypeScript shape is known: a reply action, a delegation action behind it
+  when there is one, and a note action behind the reply.
+- **The sub-agent execution.** A delegation action names a role card and a
+  task; nothing runs it yet.
+- **Cancellation from the loop.** The coordinator can cancel a run and cascade;
+  the loop does not yet offer it, and the run ledger the UI reads is not
+  assembled from the loop's own state.
