@@ -29,6 +29,7 @@ pub mod models;
 pub mod plugins;
 pub mod registry;
 pub mod prompt;
+pub mod router;
 pub mod runs;
 pub mod skills;
 pub mod state;
