@@ -43,7 +43,7 @@ Memory scope is the field that matters most. A sub-agent that can retrieve `all`
 ## Validate
 
 ```sh
-bun scripts/agent.ts check <this-directory>
+bun scripts/agent.ts check <this-directory>   # an agent directory, not templates/agent
 ```
 
 Checks that the structure matches the template and that no `{{TOKEN}}` was left unsubstituted.

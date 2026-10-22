@@ -283,6 +283,12 @@ function cmdCheck(args: string[]): void {
 	if (!dir) fail('check requires a directory: bun scripts/agent.ts check <dir>');
 	const root = resolve(ROOT, dir);
 	if (!statSync(root, { throwIfNoEntry: false })?.isDirectory()) fail(`${dir} is not a directory`);
+	// The template is the source the checker compares against. Its {{TOKEN}}
+	// placeholders are meant to stay in place, so checking it for leftover
+	// tokens would always fail. Refuse it by name rather than report false drift.
+	if (resolve(root) === resolve(ROOT, 'templates/agent')) {
+		fail('templates/agent is the template, not an agent: its {{TOKEN}} placeholders are expected. Check an agent directory instead.');
+	}
 
 	const expected = [...readTemplateFiles().keys()].sort();
 	// A parent agent legitimately contains nested agent directories, and each of
