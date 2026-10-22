@@ -33,6 +33,7 @@ pub mod router;
 pub mod runs;
 pub mod skills;
 pub mod state;
+pub mod subagents;
 pub mod thought;
 pub mod turn;
 
