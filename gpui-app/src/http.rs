@@ -467,7 +467,7 @@ async fn run_turn(
     // Whatever the plan left behind that this host can run.
     let _ = crate::agent_loop::dispatch_queued_actions(
         &state.runs,
-        &state.state_dir.root().to_path_buf(),
+        state.state_dir.root(),
         &planned.run.id,
     )
     .await;
