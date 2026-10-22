@@ -85,11 +85,15 @@ Phases 1 and 2 are done. The rename is committed as `4ba5270`, the snapshot as `
 - **Proven against a real guest** (`guests/audio`) and **against the real microphone on this host**: 18,422 samples in 1.22 s, about 15,100/s against the 16 kHz rate.
 - The ZIP route is removed. It served a file that is deliberately not carried, which is a route that looks like it works and does not.
 
+- **The wake lab is a route in the host now**, at `/wake`, beside the other signed-in surfaces. The sibling's Svelte app is gone: it was a second app inside the repository, and its presence broke the host's tooling.
+- **The host's session is what gates it.** The sibling's env-credential login is not ported: the host already has users, setup and recovery, and the route lives in the group that requires a session.
+- **The two services talk by a signed token.** The host's session cookie is scoped to the host's origin, so the browser cannot present it to the wake service on another port. The host mints a short-lived token for the signed-in user and signs it; the wake service verifies it with the same secret; it is worth nothing after a minute. Without `AGENT_WAKE_TOKEN_SECRET` on both sides the feature is off and says so — the host refuses to mint and the service refuses the connection. An unsigned token is never accepted.
+- **Verified by running it:** a signed-in user loads `/wake` and it renders; the token route refuses an unauthenticated request with 401; with the secret set, the wake service accepts the host's token and refuses a forged one.
+- The wake service no longer serves a browser interface, so its static route and its web app are gone.
+
 **Not done**
 
-- **Svelte UI port.** In progress. The sibling page is one large component (about 2,000 lines across `web/`). It is being rebuilt in the host's shell rather than copied, and `web/` stays in place until the route exists.
-- **Host credentials.** The host login (`src/routes/(auth)/login`) already supports users, setup and recovery. The sibling's env-credential login is removed when the port is done.
-- **Coverage gap.** The sibling has no tests for its audio transport or capture path.
+- **Coverage gap.** The sibling has no tests for its audio transport or capture path, and the port carries that gap with it. The transport is exercised against a real service in a browser, not by a test.
 
 **Deliberately unchanged**
 
