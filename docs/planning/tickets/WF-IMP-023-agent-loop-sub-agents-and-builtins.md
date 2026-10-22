@@ -121,14 +121,33 @@ drives a turn from a request yet.
   creates a version and never overwrites one, and retirement archives: there
   is no delete path in the module at all, deliberately.
 
+- **`gpui-app/src/agent_loop.rs` — the plan into a run graph, and the
+  dispatch.** A reply action, a delegation behind it when the decision asked
+  for one, and a note behind the reply. The dispatch claims queued actions under
+  a lease and runs them; a capability this host cannot run is left queued
+  rather than failed, because a plugin worker may claim it later.
+- **`POST /api/turn` — one turn, end to end.** Capture it, assemble the prompt
+  around it, plan the run, answer it, and run whatever the plan left behind.
+  It is the first thing that puts the whole stack — the memory corpus, the
+  prompt's cache contract, the router, the run graph, the builtins and the
+  coordinator — behind one request.
+
+**Verified by running it**, not by inspection: a turn creates the run and its
+actions, the reply action carries the provider's own failure (`401 User not
+found`, because this host's key is not accepted), and the note behind it is
+cancelled by the dependency. A turn with no usable provider still goes out: it
+has no memory and no answer, and it says so, so a failed turn is a reachable
+state rather than a blank conversation. An empty turn is refused with 422.
+
 **Not done**
 
-- **The plan → run graph → actions.** The router produces a decision and
-  nothing yet turns it into a run with its actions in the coordinator. The
-  TypeScript shape is known: a reply action, a delegation action behind it
-  when there is one, and a note action behind the reply.
 - **The sub-agent execution.** A delegation action names a role card and a
-  task; nothing runs it yet.
+  task; the action is planned and the role card is created, but nothing runs
+  the sub-agent yet.
 - **Cancellation from the loop.** The coordinator can cancel a run and cascade;
   the loop does not yet offer it, and the run ledger the UI reads is not
   assembled from the loop's own state.
+- **A provider failure, a turn failure and a failed action are distinct
+  states, but only two of the three are produced.** A failed action and a
+  failed reply are; a turn that fails before it plans anything is not, because
+  the turn always plans first.
