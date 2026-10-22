@@ -471,7 +471,7 @@ export const seededArtifacts: Record<string, Artifact> = {
 		summary: 'A failing command, because a terminal artifact that only ever succeeds is never reviewed.',
 		data: {
 			command: 'bunx tsc --noEmit src/routes/kit/example-runner.ts',
-			cwd: 'alexia-bot-Lexosa-Test-GPUI',
+			cwd: 'agent-platform',
 			exitCode: 1,
 			lines: checkTerminalLines
 		}

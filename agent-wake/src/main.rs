@@ -452,16 +452,16 @@ mod tests {
     fn live_line_flashes_only_just_after_a_wake() {
         let mut status = status();
         status.last_wake = Some(LastWake {
-            keyword: "LEXIA".to_string(),
+            keyword: "AGENT".to_string(),
             at: Duration::from_secs(5),
         });
         let stats = stats(0.2, 0.05, 10);
 
         let flashed = live_line(&status, &stats, Duration::from_secs(6));
-        assert!(flashed.contains("WAKE WORD DETECTED: LEXIA at 5.0s"), "{flashed}");
+        assert!(flashed.contains("WAKE WORD DETECTED: AGENT at 5.0s"), "{flashed}");
 
         let settled = live_line(&status, &stats, Duration::from_secs(20));
-        assert!(settled.contains("last wake LEXIA 15.0s ago"), "{settled}");
+        assert!(settled.contains("last wake AGENT 15.0s ago"), "{settled}");
     }
 
     #[test]
@@ -481,12 +481,12 @@ mod tests {
     fn log_line_reports_levels_and_the_last_wake_without_spaces() {
         let mut status = status();
         status.last_wake = Some(LastWake {
-            keyword: "LEXIA".to_string(),
+            keyword: "AGENT".to_string(),
             at: Duration::from_secs(9),
         });
         let line = log_line(&status, &stats(0.5, 0.25, 10), Duration::from_secs(10));
         assert!(line.contains("peak=-6.0_dBFS rms=-12.0_dBFS"), "{line}");
-        assert!(line.ends_with("keyword=LEXIA last_wake=1.0s"), "{line}");
+        assert!(line.ends_with("keyword=AGENT last_wake=1.0s"), "{line}");
     }
 
     #[test]

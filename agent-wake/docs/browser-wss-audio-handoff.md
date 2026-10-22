@@ -4,7 +4,7 @@
 
 Build a browser-based test UI for the sherpa-onnx wake-word prototype. The UI runs in Svelte in the user's browser. The browser captures audio from the user's Arch or Bazzite machine and streams it to the more powerful host, where the existing Rust sherpa-onnx detector runs.
 
-This is a test harness, not the final always-listening implementation. A browser tab must remain open and active, and the user must grant microphone permission. Later, Lexia can use a native local audio service for reliable background listening while reusing the Svelte UI and detector core.
+This is a test harness, not the final always-listening implementation. A browser tab must remain open and active, and the user must grant microphone permission. Later, Hey agent can use a native local audio service for reliable background listening while reusing the Svelte UI and detector core.
 
 ## Why WSS first
 

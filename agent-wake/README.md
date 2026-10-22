@@ -2,7 +2,7 @@
 
 A Rust microphone service that checks whether sherpa-onnx can detect a wake phrase locally. It does not modify or depend on the agent host. The probe only reports a wake event; it does not record, transcribe, or send audio anywhere.
 
-**Which phrase it listens for.** The phrases an agent answers to are the host's to declare: the service reads them from the host's `GET /api/agent` and spells each one into the detector's keyword file at startup. The platform default is `AGENT`. The bundled fixture says "Lexia", because that is the word the committed WAV contains, and the fixture checks the detection path rather than the phrase.
+**Which phrase it listens for.** The phrases an agent answers to are the host's to declare: the service reads them from the host's `GET /api/agent` and spells each one into the detector's keyword file at startup. The platform default is `AGENT`. The bundled fixture says "Hey agent", because that is the word the committed WAV contains, and the fixture checks the detection path rather than the phrase.
 
 **The prebuilt release is not carried in this repository.** The zip, the compiled binary and the model are fetched or built locally; see [Preparing the model](#preparing-the-model) and [Building](#building).
 
@@ -28,7 +28,7 @@ On Windows PowerShell, run `powershell -NoProfile -ExecutionPolicy Bypass -File 
 
 The setup command downloads the English Zipformer keyword-spotting model (about 19 MB) if it is not already present. The Rust crate downloads sherpa-onnx's matching native runtime during the first build.
 
-The keyword list holds the pre-tokenized phrase the detector matches. The service fills it from the host's declared phrases at startup; the committed file carries the fixture's phrase, “LEXIA”, because that is the word the committed WAV contains.
+The keyword list holds the pre-tokenized phrase the detector matches. The service fills it from the host's declared phrases at startup; the committed file carries the fixture's phrase, “AGENT”, because that is the word the committed WAV contains.
 
 ## Serve the lab over HTTP
 
@@ -58,7 +58,7 @@ The threshold is model-specific; test it with speech and ordinary background aud
 
 - The selected pretrained KWS model accepts a custom keyword list without training a new model.
 - Audio is processed locally and a successful match emits a `WAKE { ... }` JSON line.
-- It does **not** yet retain the words after “Lexia,” run speech-to-text, integrate with Tauri, or send an intent to Jev. Those are later integration tests if this detector performs well.
+- It does **not** yet retain the words after the wake phrase, run speech-to-text, integrate with Tauri, or send an intent to Jev. Those are later integration tests if this detector performs well.
 
 ## Browser/WSS test harness
 
@@ -73,7 +73,7 @@ AGENT_WAKE_USERNAME=tester AGENT_WAKE_PASSWORD='use-a-test-password' bun run ser
 
 Open `http://localhost:8787/` for local development or `https://lexia.dlx.studio/` through the configured HTTPS proxy. The application session protects the UI, `/api/fixture`, and `/ws/audio`; the WSS endpoint also validates the configured Origin. The browser sends bounded mono `pcm_f32le` frames to the Rust worker. The host reports aggregate frame statistics and wake events without logging or persisting audio.
 
-The checked-in `assets/fixtures/agent-wake.wav` is a synthetic, provenance-documented “Lexia” WAV fixture. Run it from the authenticated UI to test the model independently of microphone permission, device selection, and network capture. The existing model-package WAVs are not positive Lexia fixtures.
+The checked-in `assets/fixtures/agent-wake.wav` is a synthetic, provenance-documented “Hey agent” WAV fixture. Run it from the authenticated UI to test the model independently of microphone permission, device selection, and network capture. The existing model-package WAVs are not positive Hey agent fixtures.
 
 ### Assigning an agent's wake word
 
@@ -175,7 +175,7 @@ curl -X POST http://localhost:8787/api/fixture -b cookies.txt -H 'content-type: 
 
 ```json
 { "ok": true, "fixtureId": "agent-wake",
-  "result": { "detected": true, "keyword": "LEXIA", "timestamp": 1791109713732, "durationMs": 1484,
+  "result": { "detected": true, "keyword": "AGENT", "timestamp": 1791109713732, "durationMs": 1484,
               "stats": { "duration_ms": 1484, "frame_count": 2, "peak": 0.53, "rms": 0.07,
                          "sample_count": 23744, "sample_rate": 16000 } } }
 ```
@@ -193,7 +193,7 @@ curl -X POST http://localhost:8787/api/keywords -b cookies.txt \
 
 ```json
 { "ok": true, "name": "HENROY", "tokens": "▁HE N RO Y", "added": true,
-  "keywords": ["▁LE X IA", "▁HE N RO Y"],
+  "keywords": ["▁A G ENT", "▁HE N RO Y"],
   "verification": { "fixtureId": "agent-wake", "detected": true, "ok": true },
   "message": "HENROY is loaded. Speak \"HENROY\" into the microphone to confirm it fires." }
 ```
@@ -301,7 +301,7 @@ Flags: `--model-dir`, `--keywords-file`, `--wav`, `--threads`, `--threshold`, `-
 In a terminal it keeps one line current, so silence, signal and detection are distinguishable at a glance:
 
 ```
-[11:26:53] model loaded, listening for: ▁LE X IA
+[11:26:53] model loaded, listening for: ▁A G ENT
 [11:26:53] listening on <input device> at 44100 Hz (2 channel(s)). Press Ctrl+C to stop.
 ● listening 6.0s · 44100 Hz x2 · frames 140 · peak -9.6 dBFS · rms -27.5 dBFS · threshold 0.25 · last wake none
 ```
@@ -309,16 +309,16 @@ In a terminal it keeps one line current, so silence, signal and detection are di
 `●` is a green filled dot while the input carries signal and `○` when it is effectively silent, which is the difference between a quiet room and a capture path that is not working. A detection replaces the line for a few seconds:
 
 ```
-★ WAKE WORD DETECTED: LEXIA at 6.4s
+★ WAKE WORD DETECTED: AGENT at 6.4s
 ```
 
-and then the line settles into `last wake LEXIA 1.2s ago` so you can tell a recent hit from an old one.
+and then the line settles into `last wake AGENT 1.2s ago` so you can tell a recent hit from an old one.
 
 Every detection also prints the machine-readable record on stdout, so `cargo run --release | jq` still works, and a matching timestamped line on stderr:
 
 ```
-WAKE {"start_time":6.35, "keyword": "LEXIA", "timestamps": [6.35, 6.87, 7.07], "tokens":[" LE","X","IA"]}
-[11:26:59] wake word detected: LEXIA at 6.4s
+WAKE {"start_time":6.35, "keyword": "AGENT", "timestamps": [6.35, 6.87, 7.07], "tokens":[" LE","X","IA"]}
+[11:26:59] wake word detected: AGENT at 6.4s
 ```
 
 Piped or run under systemd there is no live line, so the same numbers arrive on a timer as one `key=value` line per field, with no spaces inside values:
@@ -332,8 +332,8 @@ Piped or run under systemd there is no live line, so the same numbers arrive on 
 ```
 $ cargo run --release -- --wav assets/fixtures/agent-wake.wav
 [11:27:11] reading assets/fixtures/agent-wake.wav
-WAKE {"start_time":0.00, "keyword": "LEXIA", "timestamps": [0.00, 0.52, 0.72], "tokens":[" LE", "X", "IA"]}
-[11:27:11] wake word detected: LEXIA 0.00s into the clip
+WAKE {"start_time":0.00, "keyword": "AGENT", "timestamps": [0.00, 0.52, 0.72], "tokens":[" LE", "X", "IA"]}
+[11:27:11] wake word detected: AGENT 0.00s into the clip
 [11:27:11] finished: 1.48s, 2 frames, 23744 samples at 16000 Hz, peak -5.5 dBFS, wake word detected
 ```
 

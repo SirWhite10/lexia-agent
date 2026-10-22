@@ -91,7 +91,9 @@ describe('commandForKeyword', () => {
 
 	test('a keyword the agent does not answer to runs nothing, rather than a default', () => {
 		expect(commandForKeyword('SOMETHING ELSE')).toBeNull();
-		expect(commandForKeyword('LEXIA')).toBeNull();
+		// A keyword the agent does not answer to runs nothing rather than a
+		// default: a default would run the wrong thing.
+		expect(commandForKeyword('SOMETHING ELSE')).toBeNull();
 	});
 
 	test('the phrases in force can be read back', () => {

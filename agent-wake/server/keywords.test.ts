@@ -34,18 +34,18 @@ describe('normalizeName', () => {
 describe('keyword file', () => {
 	test('appends a keyword once and leaves no temporary file', async () => {
 		const path = join(directory, 'keywords.txt');
-		expect(await appendKeywordLine('▁LE X IA', path)).toBe(true);
+		expect(await appendKeywordLine('▁A G ENT', path)).toBe(true);
 		expect(await appendKeywordLine('▁HE N RO Y', path)).toBe(true);
 		expect(await appendKeywordLine('▁HE N RO Y', path)).toBe(false);
-		expect(await readKeywordLines(path)).toEqual(['▁LE X IA', '▁HE N RO Y']);
+		expect(await readKeywordLines(path)).toEqual(['▁A G ENT', '▁HE N RO Y']);
 		expect(await Bun.file(`${path}.tmp`).exists()).toBe(false);
 	});
 
 	test('ignores blank lines and surrounding whitespace', async () => {
 		const path = join(directory, 'messy.txt');
-		await Bun.write(path, '\n  ▁LE X IA  \n\n');
-		expect(await readKeywordLines(path)).toEqual(['▁LE X IA']);
-		expect(await appendKeywordLine('▁LE X IA', path)).toBe(false);
+		await Bun.write(path, '\n  ▁A G ENT  \n\n');
+		expect(await readKeywordLines(path)).toEqual(['▁A G ENT']);
+		expect(await appendKeywordLine('▁A G ENT', path)).toBe(false);
 	});
 
 	test('reads a missing file as an empty list', async () => {
@@ -61,7 +61,7 @@ const sentencepiece = await Bun.spawn([python, '-c', 'import sentencepiece'], {
 
 describe.skipIf(sentencepiece !== 0)('tokenizeName', () => {
 	test('spells a wake word the way the detector expects', async () => {
-		expect(await tokenizeName('LEXIA')).toBe('▁LE X IA');
+		expect(await tokenizeName('AGENT')).toBe('▁A G ENT');
 		expect(await tokenizeName('HENROY')).toBe('▁HE N RO Y');
 	});
 

@@ -12,4 +12,4 @@ if (-not (Test-Path -LiteralPath $modelDir)) {
 	Remove-Item -LiteralPath $archive
 }
 
-Write-Host "Prepared model at $modelDir; the bundled token list listens for LEXIA."
+Write-Host "Prepared model at $modelDir; the bundled token list listens for AGENT."

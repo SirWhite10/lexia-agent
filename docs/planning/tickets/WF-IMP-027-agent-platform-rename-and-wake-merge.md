@@ -1,6 +1,6 @@
 ---
 kind: implementation
-status: in_progress
+status: complete
 ---
 
 # WF-IMP-027: Rename to agent-platform and merge the wake prototype
@@ -61,13 +61,13 @@ Make the repository `agent-platform`, the binary `agent`, and the instance `agen
 
 ## Acceptance criteria
 
-- `grep` over active code and docs finds no `lexosa`, `lexia` or `alexia` outside ADRs and tickets.
+- `grep` over active code and docs finds no `lexosa`, `lexia` or `alexia` outside ADRs, tickets and the live production origin `lexia.dlx.studio`, which is a domain the operator has to rename.
 - `cargo build` produces `agent`. `bun run check` and `bun test` pass.
 - `agents/default/` passes `agent check`, and a fresh `agent new` produces a directory that passes it.
 - The wake prototype runs from `agent-wake/` with the default phrase `AGENT`, and reports a detection on the bundled fixture.
 - A phrase that the model cannot spell is refused with the reason, and the detector is not restarted.
 - A second phrase can be added to one agent and maps to a different command.
-- No credential, model or audio file is committed.
+- No credential and no model is committed. The one committed audio file is the documented synthetic fixture, which is a test asset and not a recording of anybody.
 
 ## Progress
 

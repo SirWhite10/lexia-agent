@@ -13,4 +13,4 @@ if [[ ! -d "$model_dir" ]]; then
 	rm "$archive"
 fi
 
-printf '\nPrepared model at %s; the bundled token list listens for “LEXIA”.\n' "$model_dir"
+printf '\nPrepared model at %s; the bundled token list listens for “AGENT”.\n' "$model_dir"

@@ -17,7 +17,9 @@ describe('validatePhrases', () => {
 
 	test('an unregistered keyword maps to no command, rather than a default one', () => {
 		const phrases = validatePhrases([{ phrase: 'agent', command: 'chat.reply' }]);
-		expect(commandFor(phrases, 'LEXIA')).toBeNull();
+		// A keyword the agent does not answer to. It must map to nothing rather
+		// than to a default, because a default would run the wrong thing.
+		expect(commandFor(phrases, 'SOMETHING ELSE')).toBeNull();
 	});
 
 	test('the same phrase cannot map to two commands', () => {
