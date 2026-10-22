@@ -604,6 +604,126 @@ fn sqlite(error: rusqlite::Error) -> Error {
     Error::State(format!("memory store: {error}"))
 }
 
+
+/// The instruction the reflection model is given. Ported verbatim: the model
+/// is asked for JSON only, and the rules are part of the contract.
+pub const REFLECTION_SYSTEM: &str = "You maintain Agent's long-term memory. Reply with JSON only, no prose and no code fences:\n{\"facts\": [{\"body\": \"one concise durable fact about the user or their world\", \"tags\": [\"comma\",\"separated\"]}], \"traits\": [\"one personality trait Agent has observed\"]}\nRules: facts are durable (preferences, facts about the user's home, work, people), never transient chit-chat, never secrets; reuse the wording of an existing fact when you revise it; traits are short lowercase phrases describing how Agent should behave for this user.";
+
+/// A model call the reflection makes. The caller supplies it, so the memory
+/// store never holds a provider credential of its own.
+#[async_trait]
+pub trait Reflector: Send + Sync {
+    async fn complete(
+        &self,
+        system: &str,
+        user: &str,
+    ) -> std::result::Result<String, String>;
+}
+
+#[derive(Debug, Clone)]
+pub struct ReflectionResult {
+    pub facts: Vec<MemoryEntry>,
+    pub traits: Vec<String>,
+    /// The personality file as it was rewritten.
+    pub file: String,
+}
+
+/// One reflection step: the model proposes distilled facts and the full trait
+/// set; facts land as versioned rows plus markdown, traits rewrite the
+/// personality file.
+pub async fn reflect(
+    store: &MemoryStore,
+    reflector: &dyn Reflector,
+    transcript: &str,
+    known_facts: &str,
+) -> Result<ReflectionResult> {
+    let reply = reflector
+        .complete(
+            REFLECTION_SYSTEM,
+            &format!(
+                "Known memory facts:\n{}\n\nRecent conversation:\n{}",
+                if known_facts.is_empty() { "(none)" } else { known_facts },
+                if transcript.is_empty() { "(none)" } else { transcript }
+            ),
+        )
+        .await
+        .map_err(|reason| Error::State(format!("the reflection model failed: {reason}")))?;
+
+    // The model is asked for JSON only, but it is a model: the first brace to
+    // the last one is taken, and a reply with no object in it is an error
+    // rather than a silent no-op.
+    let start = reply
+        .find('{')
+        .ok_or_else(|| Error::State("the reflection returned no JSON object".into()))?;
+    let end = reply
+        .rfind('}')
+        .ok_or_else(|| Error::State("the reflection returned no JSON object".into()))?;
+    if end < start {
+        return Err(Error::State("the reflection returned no JSON object".into()));
+    }
+    let parsed: serde_json::Value = serde_json::from_str(&reply[start..=end])
+        .map_err(|e| Error::State(format!("the reflection returned unreadable JSON: {e}")))?;
+
+    let known = store.list_facts()?;
+    let mut facts: Vec<MemoryEntry> = Vec::new();
+    if let Some(proposed) = parsed.get("facts").and_then(|value| value.as_array()) {
+        for item in proposed {
+            let body = item
+                .get("body")
+                .and_then(|value| value.as_str())
+                .unwrap_or_default()
+                .trim()
+                .to_string();
+            if body.is_empty() {
+                continue;
+            }
+            let tags = item
+                .get("tags")
+                .and_then(|value| value.as_array())
+                .map(|values| {
+                    values
+                        .iter()
+                        .filter_map(|value| value.as_str())
+                        .collect::<Vec<&str>>()
+                        .join(",")
+                })
+                .unwrap_or_default();
+            match known.iter().find(|fact| fact.body == body) {
+                // The wording of an existing fact is reused, so the fact gains
+                // a revision rather than a second row.
+                Some(prior) => {
+                    store.revise_fact(&prior.id, &body, Some(&tags))?;
+                    facts.push(MemoryEntry {
+                        body,
+                        tags,
+                        file_path: prior.file_path.clone(),
+                        ..prior.clone()
+                    });
+                }
+                None => facts.push(store.record_fact(&body, Some(&tags))?),
+            }
+        }
+    }
+
+    let traits: Vec<String> = parsed
+        .get("traits")
+        .and_then(|value| value.as_array())
+        .map(|values| {
+            values
+                .iter()
+                .filter_map(|value| value.as_str())
+                .map(str::to_string)
+                .collect()
+        })
+        .unwrap_or_default();
+    let file = store.save_personality(&traits)?;
+    Ok(ReflectionResult {
+        facts,
+        traits,
+        file,
+    })
+}
+
 fn row_to_entry(row: &rusqlite::Row<'_>) -> rusqlite::Result<MemoryEntry> {
     let kind: String = row.get(1)?;
     Ok(MemoryEntry {

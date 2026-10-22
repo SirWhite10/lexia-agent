@@ -29,6 +29,7 @@ pub mod plugins;
 pub mod prompt;
 pub mod runs;
 pub mod state;
+pub mod turn;
 
 pub use config::AgentConfig;
 pub use credentials::{CredentialStatus, Credentials, Source};
