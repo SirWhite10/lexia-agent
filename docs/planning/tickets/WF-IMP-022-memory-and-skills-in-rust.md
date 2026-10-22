@@ -65,4 +65,56 @@ Skills live in the state directory as data, so adding one does not require rebui
 
 ## Progress
 
-Not started.
+The port is in the binary and tested. It is a library the host owns, not yet a
+reachable request: nothing calls it from a route, because the turn endpoint
+belongs to the agent loop ([WF-IMP-023](WF-IMP-023-agent-loop-sub-agents-and-builtins.md)),
+which is what decides to have a turn at all.
+
+**Ported, with the TypeScript tests as the oracle**
+
+- `gpui-app/src/prompt.rs` — the prompt assembly. The slot order and the cache
+  contract are unchanged, and the prefix digest is computed exactly as the
+  original computed it, so a test can pin the original's digest for a known
+  input. That is the only way a digest is comparable across two
+  implementations rather than against itself.
+- `gpui-app/src/memory.rs` — the corpus. Facts, log entries, revisions, the
+  markdown mirror, the personality file, the vector index, role-scoped
+  retrieval, the token budget, the re-index, and the reflection.
+- `gpui-app/src/turn.rs` — the per-turn seam. Capture, retrieve, assemble and
+  reflect, with the two rules that run through it: a provider failure degrades
+  to an empty memory block rather than breaking the turn, and reflection fires
+  on a boundary derived from the persisted log.
+- `gpui-app/src/skills.rs` — the skill index. A skill whose required plugin is
+  absent is a prompt for the self-extension loop, not an error and not a dead
+  end.
+- `gpui-app/src/thought.rs` — the thought tree. A fresh workspace opens on the
+  default pipeline; the default is added rather than imposed.
+
+**Verified by running it**: 111 tests in the host crate, clippy clean. The
+port of `tests/prompt-assembly.test.ts` and `tests/memory-retrieval.test.ts`
+passes, and the turn loop's own claims are covered: a captured turn is
+retrieved by a later one, reflection fires on its boundary and not off it, a
+provider failure degrades, and a new skill moves the cache prefix once.
+
+**Three things the port got wrong, and the tests caught**
+
+- A std mutex is not reentrant. `revise_fact` held the connection and then
+  read the row back through it, which deadlocked. The transaction is scoped now.
+- The original's re-index count of "three or more" counted rows left over from
+  earlier tests in a shared corpus. The ported test asserts the per-row
+  outcome, which is the claim that was actually being made.
+- Trimming a frontmatter value first destroys the newline that distinguishes a
+  block list from an inline one. The skill parser now looks before it trims.
+
+**Not done, and named**
+
+- **The cache behaviour is not measured.** The prefix is byte-stable and the
+  digest proves it; whether the provider actually reuses the cached prefix is
+  a claim that needs a live provider, and this host's `OPENROUTER_API_KEY` is
+  rejected by OpenRouter. That measurement is still owed.
+- **Nothing reaches these modules from a request.** The turn endpoint, the
+  transcript the reflection reads, and the resolved tools slot all belong to
+  the agent loop.
+- **The TypeScript originals are still there.** They are removed by
+  [WF-IMP-025](WF-IMP-025-retire-eve-and-the-typescript-agent.md), once the
+  binary answers for them.
