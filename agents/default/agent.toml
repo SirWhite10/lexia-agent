@@ -95,6 +95,11 @@ type = "openai-compatible"
 endpoint = "https://openrouter.ai/api/v1"
 modalities = ["text", "embeddings", "audio"]
 key_file = "openrouter.key"
+# The name and the one-line description are what the Settings screen shows.
+# `env_var` is not written out: it is `<ID>_API_KEY` unless a provider says
+# otherwise, and `has_catalogue` is true unless a provider publishes no list.
+label = "OpenRouter"
+summary = "Models from many labs behind one key: text, embeddings and transcription over one endpoint."
 
 # Use-case → model mapping. A use-case is a logical class of work, not a vendor's
 # model id. Catalogues are fetched per provider and only when a key exists, so an
@@ -142,3 +147,18 @@ model = "openrouter/openai/whisper-large-v3"
 [[model_overrides]]
 model = "inclusionai/ling-3.0-flash-sante:free"
 context_window = 128000
+
+# --------------------------------------------------------------------------
+# Wake phrases.
+#
+# What the user says to wake this agent, and what that wakes. One agent holds
+# several phrases, each mapped to its own command. A phrase is compared
+# uppercased, and must be spellable with the detector's own vocabulary.
+#
+# The section is optional: an agent without one answers to the platform default
+# ("AGENT"), which is what happens when the setup step is skipped.
+# --------------------------------------------------------------------------
+
+[[wake]]
+phrase = "AGENT"
+command = "chat.reply"

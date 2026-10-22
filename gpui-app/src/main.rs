@@ -83,9 +83,20 @@ async fn main() -> Result<()> {
     // Loaded only where it is needed. `plugins` and `providers` answer from the
     // state directory, and an operator running one of them on a half-configured
     // install should get the answer, not a refusal to start.
-    let manifest = cli.agent_dir.join("agent.toml");
+    //
+    // The path is resolved to an absolute one before it is used, because the
+    // default is relative to the current directory and a failure that says
+    // "agents/default/agent.toml" does not say *where* that was.
+    let agent_dir = std::path::absolute(&cli.agent_dir).unwrap_or_else(|_| cli.agent_dir.clone());
+    let manifest = agent_dir.join("agent.toml");
     let load_config = || {
-        AgentConfig::load(&manifest).with_context(|| format!("loading {}", manifest.display()))
+        AgentConfig::load(&manifest).with_context(|| {
+            format!(
+                "loading {}. The agent directory is resolved relative to the current \
+                 directory; set AGENT_AGENT_DIR or run from the directory that holds it.",
+                manifest.display()
+            )
+        })
     };
 
     match cli.command {

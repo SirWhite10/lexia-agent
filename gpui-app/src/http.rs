@@ -121,6 +121,21 @@ async fn health(State(state): State<AppState>) -> Json<serde_json::Value> {
 #[derive(Serialize)]
 struct ProviderView {
     id: String,
+    /// The name a person sees. The Settings screen shows this rather than the
+    /// id, because "openrouter" is not how a provider is written.
+    label: String,
+    /// One line saying what the provider is for.
+    summary: String,
+    /// The environment variable that outranks the stored key. The screen tells
+    /// the operator which variable wins.
+    env_var: String,
+    /// The environment variable that moves a self-hosted provider, if it has
+    /// one.
+    base_url_env: Option<String>,
+    /// Whether the provider publishes a model list the host can fetch. A
+    /// provider that does not has its model ids typed by hand, and the screen
+    /// has to say so rather than offer an empty picker.
+    has_catalogue: bool,
     kind: &'static str,
     endpoint: String,
     modalities: Vec<String>,
@@ -177,6 +192,11 @@ async fn list_providers(State(state): State<AppState>) -> Json<Vec<ProviderView>
                 let status = state.credentials.status(provider);
                 ProviderView {
                     id: provider.id.clone(),
+                    label: provider.display_label(),
+                    summary: provider.summary.clone(),
+                    env_var: provider.env_var_name(),
+                    base_url_env: provider.base_url_env.clone(),
+                    has_catalogue: provider.has_catalogue,
                     kind: match provider.kind {
                         crate::config::ProviderKind::OpenaiCompatible => "openai-compatible",
                         crate::config::ProviderKind::Anthropic => "anthropic",
@@ -252,6 +272,10 @@ struct UseCaseView {
 #[derive(Serialize)]
 struct ModelsResponse {
     use_cases: Vec<UseCaseView>,
+    // The provider list travels with the use-cases because the Settings
+    // screen renders both: a use-case row names a provider, and the provider
+    // card says what that provider is and whether it is configured.
+    providers: Vec<ModelProviderView>,
     // `always` is what an unlisted dispatch falls back to, and a row whose
     // provider is unconfigured is marked `inert` rather than hidden — a silent
     // fallback looks like the setting worked.
@@ -280,7 +304,37 @@ async fn list_models(State(state): State<AppState>) -> Json<ModelsResponse> {
         })
         .collect();
 
-    Json(ModelsResponse { use_cases })
+    // The provider list travels with the use-cases because the Settings
+    // screen renders both: a use-case row names a provider, and the provider
+    // card says what that provider is and whether it is configured.
+    let providers: Vec<ModelProviderView> = config
+        .providers
+        .iter()
+        .map(|provider| ModelProviderView {
+            id: provider.id.clone(),
+            label: provider.display_label(),
+            modalities: provider.modalities.clone(),
+            has_catalogue: provider.has_catalogue,
+            configured: state.credentials.status(provider).source != Source::Absent,
+        })
+        .collect();
+
+    Json(ModelsResponse {
+        use_cases,
+        providers,
+    })
+}
+
+#[derive(Serialize)]
+struct ModelProviderView {
+    id: String,
+    label: String,
+    modalities: Vec<String>,
+    /// Whether a model list can be fetched for this provider. A provider that
+    /// publishes none has its model ids typed by hand.
+    has_catalogue: bool,
+    /// Whether a credential is in force, from the environment or a stored file.
+    configured: bool,
 }
 
 async fn events(
@@ -828,6 +882,117 @@ mod tests {
             Some(crate::runs::ExecutionMode::Background)
         );
         assert!(plan.actions[0].depends_on.is_empty());
+    }
+
+    const PROVIDER_MANIFEST: &str = r#"
+[agent]
+name = "agent"
+title = "Agent"
+description = "The main agent."
+
+[memory]
+scope = "all"
+facts = "memory/facts"
+
+[[providers]]
+id = "openrouter"
+type = "openai-compatible"
+endpoint = "https://openrouter.ai/api/v1"
+modalities = ["text", "audio"]
+key_file = "openrouter.key"
+label = "OpenRouter"
+summary = "Many labs behind one key."
+"#;
+
+    async fn state_for(config: &str) -> (AppState, std::path::PathBuf) {
+        let directory = std::env::temp_dir().join(format!(
+            "agent-http-contract-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let state = StateDir::ensure(&directory).expect("state directory");
+        let app_state = AppState {
+            config: Arc::new(RwLock::new(
+                crate::AgentConfig::parse(config).expect("manifest"),
+            )),
+            plugins: Arc::new(
+                crate::plugins::PluginHost::new(
+                    crate::plugins::Registry::open(state.plugins_directory()).expect("registry"),
+                )
+                .expect("plugin host"),
+            ),
+            runs: Arc::new(Coordinator::open(&state.runs_database()).expect("coordinator")),
+            // The environment is ignored on purpose. A test that depends on
+            // the developer's shell is a test that fails on someone else's
+            // machine, and the credential in force is part of what is being
+            // asserted here.
+            credentials: Arc::new(Credentials::with_env(state.clone(), |_| None)),
+            state_dir: state,
+            events: event_channel(),
+            version: env!("CARGO_PKG_VERSION"),
+        };
+        (app_state, directory)
+    }
+
+    /// The Settings screen renders a provider card from these fields. A field
+    /// the contract does not carry does not error: it renders as a blank where
+    /// a name should be. So the contract is pinned here against the screen's
+    /// own list.
+    #[tokio::test]
+    async fn the_provider_contract_carries_every_field_the_settings_screen_renders() {
+        let (state, directory) = state_for(PROVIDER_MANIFEST).await;
+        let Json(providers) = list_providers(State(state.clone())).await;
+        let payload = serde_json::to_value(&providers).expect("json");
+        let provider = &payload[0];
+        for field in [
+            "id",
+            "kind",
+            "endpoint",
+            "modalities",
+            "credential",
+            "shadowed_file",
+            "label",
+            "summary",
+            "env_var",
+            "base_url_env",
+            "has_catalogue",
+        ] {
+            assert!(
+                provider.get(field).is_some(),
+                "the provider contract is missing `{field}`: {provider}"
+            );
+        }
+        assert_eq!(provider["label"], "OpenRouter");
+        assert_eq!(
+            provider["env_var"], "OPENROUTER_API_KEY",
+            "the environment variable is derived from the id when the manifest does not say"
+        );
+        assert_eq!(provider["has_catalogue"], true);
+        let _ = std::fs::remove_dir_all(&directory);
+    }
+
+    /// The models screen renders a provider card per provider alongside the
+    /// use-case rows, and needs to know which providers are configured.
+    #[tokio::test]
+    async fn the_models_contract_carries_the_provider_cards() {
+        let (state, directory) = state_for(PROVIDER_MANIFEST).await;
+        let Json(response) = list_models(State(state.clone())).await;
+        let payload = serde_json::to_value(&response).expect("json");
+        assert!(
+            payload.get("providers").is_some(),
+            "the models contract is missing the provider list: {payload}"
+        );
+        let provider = &payload["providers"][0];
+        for field in ["id", "label", "modalities", "has_catalogue", "configured"] {
+            assert!(
+                provider.get(field).is_some(),
+                "the provider card is missing `{field}`: {provider}"
+            );
+        }
+        assert_eq!(
+            provider["configured"], false,
+            "no credential was configured, so the card says so"
+        );
+        let _ = std::fs::remove_dir_all(&directory);
     }
 
     #[test]

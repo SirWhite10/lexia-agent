@@ -1,6 +1,6 @@
 ---
 kind: implementation
-status: planned
+status: in_progress
 ---
 
 # WF-IMP-027: Rename to agent-platform and merge the wake prototype
@@ -71,4 +71,24 @@ Make the repository `agent-platform`, the binary `agent`, and the instance `agen
 
 ## Progress
 
-Not started. Decisions are recorded in ADR 0006.
+Phases 1 and 2 are done. The rename is committed as `4ba5270`, the snapshot as `2371258`, and the template check fix as `325daf5`. Phases 3 to 6 are partly done.
+
+**Done and verified**
+
+- The sibling is imported as `agent-wake/` (48 files, no zip, binary, `.venv-tools`, `target`, `models` or `.scratch`). The model is copied locally to test and is gitignored.
+- Wake identifiers renamed to `agent-wake`: env vars `AGENT_WAKE_*`, the worker `agent-wake-worker`, the systemd unit `agent-wake.service`, the fixture `agent-wake.wav`. Two double-rename faults found and fixed.
+- The keyword tests (5) pass. The detector fires on the fixture with its own phrase.
+- Phrase registry (`server/phrases.ts`): one agent holds several phrases, each mapped to a command. Refuses empty phrase lists, unspellable phrases, duplicate phrases and free-form command names. 7 tests pass.
+- On the real detector: with `AGENT` and `LEXIA` in one keyword file, "Hey agent" fires `AGENT` and the fixture fires `LEXIA`. Each maps to its own command.
+- Active-stream refusal already exists in the sibling (`hasActiveSessions` returns 409).
+
+**Not done**
+
+- **Default phrase.** `AGENT` alone does not fire the detector at thresholds 0.25, 0.10 or 0.05. The phrase "Hey agent" fires at all three. The configured default stays `AGENT` as decided, but a single word is not a working wake word with this model. Decision needed: a phrase, or a different model.
+- **Svelte UI port.** Not started. The sibling page is one large component (about 2,000 lines across `web/`). It needs a deliberate rebuild in the host's shell, not a copy. `web/` stays in place until the route exists.
+- **Host credentials.** The host login (`src/routes/(auth)/login`) already supports users, setup and recovery. The sibling's env-credential login is removed when the port is done.
+- **audio.capture.** Not added. Needs a consent-model decision, granted per agent.
+- **Coverage gap.** The sibling has no tests for its audio transport or capture path.
+- **Production origin.** `lexia.dlx.studio` is a live domain and is deliberately not renamed. It appears in `deploy/`, `server/audio.ts`, `serve.ts` and the README.
+
+WF-IMP-027 is not complete.

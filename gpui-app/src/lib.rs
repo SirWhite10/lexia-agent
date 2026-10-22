@@ -291,6 +291,11 @@ key_file = "openrouter.key"
             endpoint: "https://openrouter.ai/api/v1".into(),
             modalities: vec!["text".into()],
             key_file: "openrouter.key".into(),
+            label: None,
+            summary: String::new(),
+            env_var: None,
+            base_url_env: None,
+            has_catalogue: true,
         };
 
         // Nothing stored yet: the environment is the only source.

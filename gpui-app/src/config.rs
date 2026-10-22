@@ -179,6 +179,53 @@ pub struct Provider {
     #[serde(default)]
     pub modalities: Vec<String>,
     pub key_file: String,
+    /// The name a person sees. Absent means the id, capitalised.
+    #[serde(default)]
+    pub label: Option<String>,
+    /// One line saying what this provider is for. The Settings screen shows
+    /// it, so it is part of the contract rather than decoration.
+    #[serde(default)]
+    pub summary: String,
+    /// The environment variable that outranks the stored key. Absent means
+    /// `<ID>_API_KEY`.
+    #[serde(default)]
+    pub env_var: Option<String>,
+    /// The environment variable that moves a self-hosted provider, if it has
+    /// one. The screen tells the operator which variable to set.
+    #[serde(default)]
+    pub base_url_env: Option<String>,
+    /// Whether the provider publishes a model list the host can fetch. A
+    /// provider that does not has its model ids typed by hand.
+    #[serde(default = "default_has_catalogue")]
+    pub has_catalogue: bool,
+}
+
+fn default_has_catalogue() -> bool {
+    true
+}
+
+impl Provider {
+    /// The name to show. The id, capitalised, when the manifest does not say.
+    pub fn display_label(&self) -> String {
+        match &self.label {
+            Some(label) => label.clone(),
+            None => {
+                let mut letters = self.id.chars();
+                match letters.next() {
+                    None => self.id.clone(),
+                    Some(first) => first.to_uppercase().collect::<String>() + letters.as_str(),
+                }
+            }
+        }
+    }
+
+    /// The environment variable that outranks the stored key.
+    pub fn env_var_name(&self) -> String {
+        match &self.env_var {
+            Some(name) => name.clone(),
+            None => format!("{}_API_KEY", self.id.to_uppercase().replace('-', "_")),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

@@ -14,6 +14,9 @@
 
 mod openai_compatible;
 
+#[cfg(test)]
+mod live_tests;
+
 use async_trait::async_trait;
 use futures_util::stream::BoxStream;
 use serde::{Deserialize, Serialize};

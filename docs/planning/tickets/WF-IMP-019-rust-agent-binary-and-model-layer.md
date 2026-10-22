@@ -63,18 +63,36 @@ Do not delete these yet. They are removed by [WF-IMP-025](WF-IMP-025-retire-eve-
 
 ## Progress
 
-Built and verified on this host. `gpui-app/` is one crate producing the `lexosa` binary and the browser `cdylib`.
+Built and verified on this host. `gpui-app/` is one crate producing the `agent` binary and the browser `cdylib`.
 
 **Verified by running it**, not by inspection:
 
-- `lexosa models` reads the real `lexosa-agent/agent.toml` and reports the context override, the typed transcription id and the rows that resolve.
-- `lexosa serve` binds, creates its state directory, and answers `GET /health`, `GET /api/providers`, `GET /api/models` and `GET /api/events`. The SSE stream emits `ready` on connect so a client can tell a live stream from a silent one.
+- `agent models` reads the real `agents/default/agent.toml` and reports the context override, the typed transcription id and the rows that resolve.
+- `agent serve` binds, creates its state directory, and answers `GET /health`, `GET /api/agent`, `GET /api/providers`, `GET /api/models` and `GET /api/events`. The SSE stream emits `ready` on connect so a client can tell a live stream from a silent one.
 - `PUT /api/providers/openrouter/credential` writes `openrouter.key` at `0600`, flips `/api/models` from `inert: true` to `false`, and an empty submission removes the file — zero files remain afterwards.
 - An environment credential outranks a stored one and the shadow is reported rather than hidden.
 - An unknown provider is refused with `404` and the name, rather than being created.
 - 10 unit tests, clippy clean, no warnings.
 
-**Not verified, and why.** Four criteria need a live provider and this host has no credential: there is no `.env` and `OPENROUTER_API_KEY` is unset. Note that [WF-IMP-006](WF-IMP-006-sub-agent-management-surface.md) records the key as configured in `.env` — that claim does not hold here, and `.env` is gitignored so it was never in the tree to begin with.
+**The contract was checked against what the Settings screens actually render, and it was short.** The screens build a provider card from `id`, `label`, `summary`, `modalities`, `keySource`, `envVar`, `baseUrl`, `baseUrlEnv` and `hasCatalogue`. The Rust view carried `id`, `kind`, `endpoint`, `modalities`, `credential` and `shadowedFile`, and was missing five of them: there was no name to show, no description, no environment variable to name, no way to say a provider publishes no model list, and no way to say where a self-hosted provider lives.
+
+A field the contract does not carry does not error. It renders as a blank where a name should be, which is the failure nobody notices. So:
+
+- The provider section of the manifest gained `label`, `summary`, `env_var`, `base_url_env` and `has_catalogue`. `env_var` defaults to `<ID>_API_KEY` and `has_catalogue` defaults to true, so a minimal manifest still works.
+- `GET /api/providers` carries all of it. `GET /api/models` gained the provider cards the models screen renders beside the use-case rows, including whether each provider is configured.
+- Two contract tests pin this: the provider payload must carry every field the providers screen renders, and the models payload must carry the provider cards. A field dropped from the contract fails a test rather than a user's screen.
+
+The screens still read from the TypeScript host today; porting them to this contract is [WF-IMP-016](WF-IMP-016-settings-login-and-bootstrap-routes.md). The comparison is recorded here because it is what decided the contract.
+
+**Not verified, and why.** Four criteria need a live provider. This host has an `OPENROUTER_API_KEY` in the environment, and **OpenRouter rejects it**: a direct request to `POST /api/v1/chat/completions` answers `401 {"error":{"message":"User not found."}}`, and the same request through the adapter answers identically. The key has the right shape and is not accepted, so it is expired, revoked, or a placeholder. The request path itself is exercised: the catalogue fetch, which needs no credential, succeeds against the live provider and returns the models.
+
+The live tests are in the tree and say so themselves. `gpui-app/src/models/live_tests.rs` covers a completion, a tool call, structured output, the catalogue and transcription; each one probes the credential first and fails with "the credential was rejected by the provider" rather than a raw 401 in the middle of a completion, which would read like a bug in the adapter. Run them with a working key:
+
+```sh
+OPENROUTER_API_KEY=... cargo test -- --ignored --nocapture
+```
+
+They use the free model the shipped manifest names, so they cost nothing, and the repository's own speech fixture for transcription, so the transcription is checked against a file whose content is known.
 
 - *A completion reaches a real provider through the abstraction, and the same call works against two differently-shaped providers.* The abstraction and the OpenAI-compatible adapter are written; neither has been called against a live endpoint, and only one provider adapter exists. The second-shaped provider is the Anthropic or Local path, which is a manifest `type` with no adapter behind it yet.
 - *Tool calls and structured output are exercised against the provider.* The wire translation and the streaming accumulation are written and the SSE frame parser is exercised by construction, but nothing has round-tripped against a real response.
