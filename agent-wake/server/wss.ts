@@ -209,13 +209,21 @@ export function createWebSocketHandler({ worker }: WSServerOptions) {
 		async fetch(request: Request, server: Bun.Server<AudioSocketData>): Promise<Response | undefined> {
 			const url = new URL(request.url);
 			if (url.pathname !== '/ws/audio') return undefined;
-			if (!isAllowedOrigin(request.headers.get('origin'), configuredOrigins())) return new Response(JSON.stringify(audioError('origin_forbidden', 'Origin is not allowed.')), { status: 403, headers: { 'content-type': 'application/json' } });
 			// Two ways in. The service's own session cookie, for a client that
 			// logged in here; or a token the agent host signed, for the host's
 			// own page. The host's cookie is scoped to the host's origin and
 			// never reaches this process, so the token is how the page connects.
-			const session = getSession(request);
-			const hostUser = session ? null : verifyHostToken(url.searchParams.get('token'));
+			const hostUser = verifyHostToken(url.searchParams.get('token'));
+			// The origin allowlist guards the cookie path: a cookie is ambient,
+			// so any page the user visits could present it. A host token is
+			// not: it is signed for one user, worth a minute, and only the
+			// host can mint one. A cross-site page cannot obtain it, so
+			// refusing a token-carrying request on its origin would keep the
+			// host's own page from connecting without closing anything.
+			if (!hostUser && !isAllowedOrigin(request.headers.get('origin'), configuredOrigins())) {
+				return new Response(JSON.stringify(audioError('origin_forbidden', 'Origin is not allowed.')), { status: 403, headers: { 'content-type': 'application/json' } });
+			}
+			const session = hostUser ? null : getSession(request);
 			if (!session && !hostUser) return new Response(JSON.stringify(audioError('unauthorized', 'Sign in before opening an audio stream.')), { status: 401, headers: { 'content-type': 'application/json' } });
 			const identity = session?.username ?? hostUser!.id;
 			const upgraded = server.upgrade(request, { data: newSocketData(identity) });

@@ -1,4 +1,7 @@
-/// <reference lib="webworker" />
+// The worklet declares the AudioWorklet globals it uses rather than pulling in
+// the WebWorker lib: the host's program is built against the DOM lib, and
+// adding a second global lib would put two conflicting declarations of
+// `navigator`, `location` and `self` into every file it compiles.
 declare class AudioWorkletProcessor {
   readonly port: MessagePort;
   constructor(options?: AudioWorkletNodeOptions);

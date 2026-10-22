@@ -10,7 +10,7 @@
 	import { WebSocketAudioTransport } from '#lib/wake/web-audio-transport.js';
 	import { browserAudioFailure, networkError, safeErrorMessage } from '#lib/wake/errors.js';
 
-	let { data }: { data: { wsUrl: string; serviceUrl: string } } = $props();
+	let { data }: { data: { wsUrl: string } } = $props();
 
 	type EventTone = 'info' | 'success' | 'warning' | 'error';
 	type DiagnosticEvent = { id: number; time: string; tone: EventTone; title: string; detail: string };
@@ -74,7 +74,6 @@
 	let diagnostics = $state<DiagnosticEvent[]>([]);
 	let fixtureRunning = $state(false);
 	let fixtureMessage = $state<string | null>(null);
-	let serviceConfigured = $state(true);
 
 	let capture: MicrophoneCapture | null = null;
 	let transport: AudioTransport | null = null;
@@ -315,12 +314,10 @@
 		fixtureRunning = true;
 		fixtureMessage = null;
 		try {
-			const token = await mintToken();
-			const response = await fetch(`${data.serviceUrl}/api/fixture`, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-				body: JSON.stringify({ fixtureId: 'agent-wake' })
-			});
+			// The host proxies this to the service: the service is on another
+			// origin, and a request carrying an Authorization header is
+			// preflighted, which the service does not answer.
+			const response = await fetch('/api/wake/fixture', { method: 'POST' });
 			const body = await response.json().catch(() => ({}));
 			if (!response.ok) {
 				const message = body.message ?? `The service answered ${response.status}.`;
@@ -328,9 +325,15 @@
 				addEvent('warning', 'Fixture failed', message);
 				return;
 			}
-			const result = (body.result ?? {}) as { detected?: boolean; keyword?: string | null };
+			const result = (body.result ?? {}) as {
+				detected?: boolean;
+				keyword?: string | null;
+				durationMs?: number | null;
+			};
+			const keyword = result.keyword ?? 'wake word';
+			const duration = result.durationMs;
 			fixtureMessage = result.detected
-				? `Detected "${result.keyword ?? 'wake word'}".`
+				? `Detected "${keyword}"${duration === null || duration === undefined ? '.' : ` in ${formatDuration(duration)}.`}`
 				: 'The fixture did not fire. The model is loaded but did not match.';
 			addEvent(result.detected ? 'success' : 'warning', 'Fixture finished', fixtureMessage);
 		} catch (error) {

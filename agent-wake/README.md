@@ -62,18 +62,18 @@ The threshold is model-specific; test it with speech and ordinary background aud
 
 ## Browser/WSS test harness
 
-The host now includes a static Svelte test UI and a supervised Rust detector worker. The default `bun run serve` command binds the UI, API, and WSS endpoint to port **8787**. Build both sides, configure one application-login credential, and start the host from the repository root:
+The service is the detector's half: a supervised Rust worker, the WSS endpoint, and the fixture endpoint. The browser interface is the agent host's, at `/wake`. The default `bun run serve` command binds the API and the WSS endpoint to port **8787**. Build the worker, configure the service's own account, and start it from the repository root:
 
 ```sh
-bun install --cwd web
-bun run build:web
 bun run build:worker
 AGENT_WAKE_USERNAME=tester AGENT_WAKE_PASSWORD='use-a-test-password' bun run serve
 ```
 
-Open `http://localhost:8787/` for local development or `https://lexia.dlx.studio/` through the configured HTTPS proxy. The application session protects the UI, `/api/fixture`, and `/ws/audio`; the WSS endpoint also validates the configured Origin. The browser sends bounded mono `pcm_f32le` frames to the Rust worker. The host reports aggregate frame statistics and wake events without logging or persisting audio.
+The agent host reaches it over `AGENT_WAKE_WS_URL` and `AGENT_WAKE_URL`, which default to the local service. The two processes also need the same `AGENT_WAKE_TOKEN_SECRET`, at least 32 characters: the host signs a short-lived token for the signed-in user and the service verifies it, so the host's own page can open the socket without presenting its session cookie to another origin. Without the secret the feature is off and both sides say so.
 
-The checked-in `assets/fixtures/agent-wake.wav` is a synthetic, provenance-documented “Hey agent” WAV fixture. Run it from the authenticated UI to test the model independently of microphone permission, device selection, and network capture. The existing model-package WAVs are not positive Hey agent fixtures.
+The browser sends bounded mono `pcm_f32le` frames to the Rust worker. The service reports aggregate frame statistics and wake events without logging or persisting audio.
+
+The checked-in `assets/fixtures/agent-wake.wav` is a synthetic, provenance-documented “Hey agent” WAV fixture. Run it from the wake lab to test the model independently of microphone permission, device selection, and network capture. The existing model-package WAVs are not positive Hey agent fixtures.
 
 ### Assigning an agent's wake word
 
@@ -258,13 +258,11 @@ const socket = new WebSocket('ws://localhost:8787/ws/audio', { headers: { cookie
 
 Error codes: `unauthorized`, `origin_forbidden`, `upgrade_failed`, `invalid_state`, `invalid_control`, `invalid_frame`, `frame_too_large` (close 1009), `backpressure`, `session_busy` and `model_unavailable` (close 1013), `session_start_failed`, `idle_timeout`, `session_close_failed`. A clean stop closes with 1000.
 
-### `GET /agent-wake.zip`
+### No browser interface
 
-Sends the project archive (`application/zip`, `Content-Disposition: attachment`) for people who want the standalone Linux binary instead of this host. `404` when the ZIP is not in the project directory.
+The service serves no HTML. The wake lab is a route in the agent host, at `/wake`, beside the other signed-in surfaces, and the host's session is what gates it. The host mints a short-lived token for the signed-in user and signs it; the service verifies it with the same secret and refuses anything unsigned. The token travels in the socket's query string and in the `Authorization` header of a fixture request.
 
-### Static UI
-
-`/`, `/login` and `/logout` return `web/build/index.html`; any other path returns the matching file from `web/build` when it exists and falls back to the same index. The HTML shell is public, but every action behind it - the fixture, the keyword file, the audio socket - requires the session.
+The origin allowlist still guards the service's own session cookie, which is ambient and so presentable by any page the user visits. A token-carrying request is not gated on it: a cross-site page cannot mint a token, so refusing one on its origin would keep the host's own page out without closing anything.
 
 ### Configuration
 
@@ -278,7 +276,9 @@ Sends the project archive (`application/zip`, `Content-Disposition: attachment`)
 | `AGENT_WAKE_WORKER_BIN` | `target/release/agent-wake-worker` | Detector worker executable |
 | `AGENT_WAKE_THRESHOLD` | `0.25` | Detector threshold; higher rejects more, misses more |
 | `AGENT_WAKE_PYTHON` | `python3` | Interpreter used to spell new wake words |
-| `ALLOWED_ORIGINS` | `https://lexia.dlx.studio`, `http://localhost:8787`, `http://127.0.0.1:8787` | Extra origins allowed to open the audio socket |
+| `AGENT_WAKE_TOKEN_SECRET` | - | Secret the agent host signs its session token with; at least 32 characters, and the same value on both sides |
+| `AGENT_HOST_URL` | `http://127.0.0.1:8787` | The agent host, which declares the phrases this service listens for |
+| `ALLOWED_ORIGINS` | `https://lexia.dlx.studio`, `http://localhost:8787`, `http://127.0.0.1:8787` | Extra origins allowed to open the audio socket with this service's own session cookie |
 | `HOST` / `PORT` | `::` / `8787` | Bind address |
 | `PUBLIC_ORIGIN` | `https://lexia.dlx.studio` | Printed at startup only |
 

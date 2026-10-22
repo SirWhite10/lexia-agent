@@ -62,6 +62,13 @@ function parseAudioEvent(value: unknown): ServerAudioEvent | null {
     return {
       type: 'wake',
       keyword: 'keyword' in value && typeof value.keyword === 'string' ? value.keyword : undefined,
+      // The command the agent's phrase declares. The service sends null when
+      // the phrase is not one the agent answers to, and that null is
+      // information: a detection nobody mapped still has to be reported.
+      command:
+        'command' in value && (typeof value.command === 'string' || value.command === null)
+          ? value.command
+          : undefined,
       score: 'score' in value && typeof value.score === 'number' ? value.score : undefined,
       threshold: 'threshold' in value && typeof value.threshold === 'number' ? value.threshold : undefined,
       timestamp:

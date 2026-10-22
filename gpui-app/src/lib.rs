@@ -23,8 +23,10 @@ pub mod config;
 pub mod credentials;
 pub mod error;
 pub mod http;
+pub mod memory;
 pub mod models;
 pub mod plugins;
+pub mod prompt;
 pub mod runs;
 pub mod state;
 

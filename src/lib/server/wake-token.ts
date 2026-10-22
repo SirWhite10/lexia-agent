@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac } from 'node:crypto';
 
 /**
  * A short-lived token the host mints for the wake service.
@@ -34,26 +34,4 @@ export function mintWakeToken(userId: string): { token: string; expiresAt: numbe
 		.update(`${userId}${SEPARATOR}${expiresAt}`)
 		.digest('base64url');
 	return { token: `${userId}${SEPARATOR}${expiresAt}${SEPARATOR}${signature}`, expiresAt };
-}
-
-/**
- * Verify a token. The wake service has its own copy of this, because the two
- * run in different runtimes and cannot share a module; the rule they must
- * agree on is the format and the lifetime.
- */
-export function verifyWakeToken(token: string | null): { id: string; expiresAt: number } | null {
-	const secret = wakeTokenSecret();
-	if (!secret || !token) return null;
-	const parts = token.split(SEPARATOR);
-	if (parts.length !== 3) return null;
-	const [id, expiresAtRaw, signature] = parts;
-	const expiresAt = Number(expiresAtRaw);
-	if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) return null;
-	const expected = createHmac('sha256', secret)
-		.update(`${id}${SEPARATOR}${expiresAtRaw}`)
-		.digest('base64url');
-	const given = Buffer.from(signature);
-	const wanted = Buffer.from(expected);
-	if (given.length !== wanted.length || !timingSafeEqual(given, wanted)) return null;
-	return { id, expiresAt };
 }
