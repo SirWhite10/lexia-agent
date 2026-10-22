@@ -86,6 +86,7 @@ pub struct AppState {
 pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health))
+        .route("/api/agent", get(describe_agent))
         .route("/api/providers", get(list_providers))
         .route("/api/providers/{id}/credential", put(set_credential))
         .route("/api/models", get(list_models))
@@ -128,6 +129,42 @@ struct ProviderView {
     /// screen has to be able to say that rather than show a masked file which is
     /// not in use.
     shadowed_file: bool,
+}
+
+/// The agent this host serves, and what it answers to.
+///
+/// The wake phrases are here because they are the agent's own data and the
+/// clients need them to show the user what to say. The rules about what a
+/// phrase may contain are enforced where the manifest is read, not here.
+async fn describe_agent(State(state): State<AppState>) -> Json<AgentView> {
+    let config = state.config.read().await;
+    Json(AgentView {
+        name: config.agent.name.clone(),
+        title: config.agent.title.clone(),
+        description: config.agent.description.clone(),
+        wake: config
+            .wake
+            .iter()
+            .map(|w| WakePhraseView {
+                phrase: w.phrase.clone(),
+                command: w.command.clone(),
+            })
+            .collect(),
+    })
+}
+
+#[derive(Serialize)]
+struct AgentView {
+    name: String,
+    title: String,
+    description: String,
+    wake: Vec<WakePhraseView>,
+}
+
+#[derive(Serialize)]
+struct WakePhraseView {
+    phrase: String,
+    command: String,
 }
 
 async fn list_providers(State(state): State<AppState>) -> Json<Vec<ProviderView>> {

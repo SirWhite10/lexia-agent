@@ -31,6 +31,7 @@
 //! Making the host allocate the output too means a guest bug can produce a
 //! wrong answer but cannot produce a wild read.
 
+use std::sync::Arc;
 use std::time::Duration;
 
 use wasmtime::{Config, Engine, Linker, Memory, Module, Store, StoreLimits};
@@ -100,6 +101,9 @@ struct HostData {
     /// it to read its arguments, and the store cannot hold a `Memory` before the
     /// instance exists.
     memory: Option<Memory>,
+    /// The host's microphone. Shared by every plugin holding the grant, so two
+    /// granted plugins cannot fight over the device.
+    capture: Arc<crate::audio::AudioCapture>,
 }
 
 pub struct LoadedPlugin {
@@ -110,6 +114,8 @@ pub struct LoadedPlugin {
 
 pub struct PluginHost {
     engine: Engine,
+    /// The host's microphone, opened lazily when a granted plugin asks for it.
+    capture: Arc<crate::audio::AudioCapture>,
     registry: Registry,
     /// Interior mutability because consent changes at run time — a grant or a
     /// revocation arrives while the engine is shared. `Engine` is the expensive
@@ -135,7 +141,19 @@ impl PluginHost {
             engine: Engine::new(&config)?,
             registry,
             consent: std::sync::Mutex::new(ConsentLedger::new()),
+            capture: Arc::new(crate::audio::AudioCapture::new()),
         })
+    }
+
+    /// A host with a given capture session. The tests use it because a machine
+    /// without a microphone must still be able to prove the capability is real.
+    pub fn with_capture(
+        registry: Registry,
+        capture: Arc<crate::audio::AudioCapture>,
+    ) -> Result<Self> {
+        let mut host = Self::new(registry)?;
+        host.capture = capture;
+        Ok(host)
     }
 
     pub fn registry(&self) -> &Registry {
@@ -160,6 +178,7 @@ impl PluginHost {
                 | Capability::FilesystemRead
                 | Capability::FilesystemWrite
                 | Capability::Shell
+                | Capability::AudioCapture
         )
     }
 
@@ -291,9 +310,19 @@ impl PluginHost {
         };
 
         if written < 0 {
+            // The guest can only report a negative number, so the reason it
+            // declined is whatever it logged. Carrying that here is the
+            // difference between "the guest declined" and "the microphone is in
+            // use by another process".
+            let logged = store.data().log.join(" | ");
+            let reason = if logged.is_empty() {
+                "the guest declined the call".to_string()
+            } else {
+                format!("the guest declined the call: {logged}")
+            };
             return Err(PluginError::Rejected {
                 plugin: plugin.to_string(),
-                reason: "the guest declined the call".into(),
+                reason,
             }
             .into());
         }
@@ -374,6 +403,7 @@ impl PluginHost {
                 .build(),
             log: Vec::new(),
             memory: None,
+            capture: self.capture.clone(),
         };
 
         let mut store = Store::new(&self.engine, data);
@@ -493,6 +523,56 @@ impl PluginHost {
                     },
                 )
                 .map_err(|e| format!("`{capability}`: {e}"))?;
+            }
+            Capability::AudioCapture => {
+                linker
+                    .func_wrap(
+                        HOST_NAMESPACE,
+                        capability.host_import(),
+                        move |mut caller: wasmtime::Caller<'_, HostData>, ptr: i32, len: i32| -> i32 {
+                            if len <= 0 {
+                                return -1;
+                            }
+                            // The capture session is read outside the guest's
+                            // call so a device that cannot be opened reports an
+                            // error instead of a silent empty buffer.
+                            let capture = caller.data().capture.clone();
+                            let samples = match capture.read(len as usize) {
+                                Ok(samples) => samples,
+                                Err(error) => {
+                                    // The reason goes into the plugin's log as
+                                    // well as the host's, because the guest can
+                                    // only report a negative number. Without it
+                                    // the caller would be told the guest
+                                    // declined, which is not what happened.
+                                    let message = format!("audio capture failed: {error}");
+                                    tracing::warn!(
+                                        plugin = %caller.data().plugin,
+                                        "{message}"
+                                    );
+                                    caller.data_mut().log.push(message);
+                                    return -1;
+                                }
+                            };
+                            if samples.is_empty() {
+                                // Silence is a valid answer: the device is live
+                                // and has not produced a frame yet.
+                                return 0;
+                            }
+                            let Some(memory) = caller.data().memory else {
+                                return -1;
+                            };
+                            let mut bytes = Vec::with_capacity(samples.len() * 4);
+                            for sample in &samples {
+                                bytes.extend_from_slice(&sample.to_le_bytes());
+                            }
+                            match memory.write(&mut caller, ptr as usize, &bytes) {
+                                Ok(()) => bytes.len() as i32,
+                                Err(_) => -1,
+                            }
+                        },
+                    )
+                    .map_err(|e| format!("`{capability}`: {e}"))?;
             }
             Capability::MemoryRead | Capability::MemoryWrite => {
                 // Unreachable: `grantable` refuses these, so they never reach a

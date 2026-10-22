@@ -1,0 +1,15 @@
+# A second real guest, built to wasm32-unknown-unknown. It exists to prove the
+# `audio_capture` capability is real rather than a name in an enum: it imports
+# `agent_host_audio_capture`, which the host links only when an operator granted
+# that capability to the agent. Without the grant the import does not exist and
+# the module fails to instantiate.
+[package]
+name = "agent-plugin-audio"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[workspace]

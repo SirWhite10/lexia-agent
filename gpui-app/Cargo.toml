@@ -41,6 +41,11 @@ toml = "0.9"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
+# The microphone adapter is native-only: `cpal` has no wasm32 target, and the
+# browser build reaches the microphone through the page, not through the host.
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+cpal = "0.16"
+
 [profile.release]
 # The client bundle is the size-sensitive target; LTO and `opt-level = "s"` are
 # chosen for it, and the agent host inherits them because it is the same crate.

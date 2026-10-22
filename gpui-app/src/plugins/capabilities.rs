@@ -38,10 +38,16 @@ pub enum Capability {
     MemoryRead,
     /// Write a durable fact through `host.memory.write`.
     MemoryWrite,
+    /// Capture audio from the microphone through `host.audio.capture`.
+    ///
+    /// The host owns the device: one capture session, shared by every plugin
+    /// that holds this grant. The samples are mono f32 at the capture rate,
+    /// whatever the device does natively.
+    AudioCapture,
 }
 
 impl Capability {
-    pub const ALL: [Capability; 8] = [
+    pub const ALL: [Capability; 9] = [
         Capability::Log,
         Capability::HttpGet,
         Capability::HttpPost,
@@ -50,6 +56,7 @@ impl Capability {
         Capability::Shell,
         Capability::MemoryRead,
         Capability::MemoryWrite,
+        Capability::AudioCapture,
     ];
 
     /// The stable wire name, used in manifests, in the consent ledger and in
@@ -65,6 +72,7 @@ impl Capability {
             Capability::Shell => "shell",
             Capability::MemoryRead => "memory_read",
             Capability::MemoryWrite => "memory_write",
+            Capability::AudioCapture => "audio_capture",
         }
     }
 
@@ -85,6 +93,7 @@ impl Capability {
             Capability::Shell => "agent_host_shell",
             Capability::MemoryRead => "agent_host_memory_search",
             Capability::MemoryWrite => "agent_host_memory_write",
+            Capability::AudioCapture => "agent_host_audio_capture",
         }
     }
 

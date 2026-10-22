@@ -18,6 +18,7 @@
 //! nothing about HTTP, and nothing in the crate builds a vendor's request shape
 //! by hand outside [`models`].
 
+pub mod audio;
 pub mod config;
 pub mod credentials;
 pub mod error;
@@ -73,6 +74,86 @@ profile = "standard"
         assert_eq!(config.agent.name, "agent");
         assert_eq!(config.sandbox.profile, "standard");
         assert!(config.providers.is_empty());
+    }
+
+    /// A manifest that says nothing about waking still has to wake to
+    /// something, so the platform default applies. This is the path a user takes
+    /// when they skip the setup step that picks a name.
+    #[test]
+    fn a_manifest_without_wake_phrases_gets_the_platform_default() {
+        let config = AgentConfig::parse(MINIMAL).expect("valid");
+        assert_eq!(config.wake.len(), 1);
+        assert_eq!(config.wake[0].phrase, "AGENT");
+        assert_eq!(config.wake_command("AGENT"), Some("chat.reply"));
+    }
+
+    #[test]
+    fn one_agent_holds_several_phrases_each_mapped_to_its_own_command() {
+        let text = format!(
+            "{MINIMAL}{}",
+            r#"
+[[wake]]
+phrase = "agent"
+command = "chat.reply"
+
+[[wake]]
+phrase = "hey agent"
+command = "note.write"
+"#
+        );
+        let config = AgentConfig::parse(&text).expect("valid");
+        // The phrase is stored uppercase, because that is what the detector
+        // reports.
+        assert_eq!(config.wake[0].phrase, "AGENT");
+        assert_eq!(config.wake_command("AGENT"), Some("chat.reply"));
+        assert_eq!(config.wake_command("HEY AGENT"), Some("note.write"));
+        assert_eq!(config.wake_command("SOMETHING ELSE"), None);
+    }
+
+    #[test]
+    fn a_phrase_that_cannot_be_spelled_is_refused() {
+        let text = format!(
+            "{MINIMAL}{}",
+            r#"
+[[wake]]
+phrase = "H!ENROY"
+command = "chat.reply"
+"#
+        );
+        let error = AgentConfig::parse(&text).expect_err("an unspellable phrase must not parse");
+        assert!(error.to_string().contains("wake phrase"), "{error}");
+    }
+
+    #[test]
+    fn a_wake_command_must_be_a_command_name_and_not_a_shell_line() {
+        let text = format!(
+            "{MINIMAL}{}",
+            r#"
+[[wake]]
+phrase = "AGENT"
+command = "rm -rf /"
+"#
+        );
+        let error = AgentConfig::parse(&text).expect_err("a shell line must not parse");
+        assert!(error.to_string().contains("wake command"), "{error}");
+    }
+
+    #[test]
+    fn the_same_phrase_cannot_be_declared_twice() {
+        let text = format!(
+            "{MINIMAL}{}",
+            r#"
+[[wake]]
+phrase = "AGENT"
+command = "chat.reply"
+
+[[wake]]
+phrase = "agent"
+command = "note.write"
+"#
+        );
+        let error = AgentConfig::parse(&text).expect_err("a duplicate phrase must not parse");
+        assert!(error.to_string().contains("more than once"), "{error}");
     }
 
     /// The whole reason for `deny_unknown_fields`: a typo'd key must fail loudly

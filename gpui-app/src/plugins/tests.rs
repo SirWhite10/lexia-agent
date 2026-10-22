@@ -262,3 +262,189 @@ fn declaring_an_import_the_plugin_never_requested_is_an_error() {
         Err(Error::Plugin(PluginError::LoadFailed { .. }))
     ));
 }
+
+/// The audio guest's compiled artifact, built on demand like the echo guest's.
+fn audio_guest_artifact() -> PathBuf {
+    let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("guests/audio");
+    let artifact = crate_dir
+        .join("target/wasm32-unknown-unknown/release/agent_plugin_audio.wasm");
+    if !artifact.is_file() {
+        let status = Command::new("cargo")
+            .args([
+                "+nightly-2026-10-04",
+                "build",
+                "--release",
+                "--target",
+                "wasm32-unknown-unknown",
+            ])
+            .current_dir(&crate_dir)
+            .status()
+            .expect("cargo is available to build the guest");
+        assert!(status.success(), "the audio guest failed to build");
+    }
+    assert!(
+        artifact.is_file(),
+        "audio guest artifact missing at {}",
+        artifact.display()
+    );
+    artifact
+}
+
+/// A capture source that hands over a fixed tone, so the microphone path can be
+/// proven on a machine with no microphone — and so the test is deterministic.
+struct FakeCapture {
+    samples: Vec<f32>,
+    rate: u32,
+}
+
+impl crate::audio::CaptureSource for FakeCapture {
+    fn start(
+        &mut self,
+        sink: std::sync::Arc<std::sync::Mutex<crate::audio::CaptureBuffer>>,
+    ) -> std::result::Result<u32, crate::audio::AudioError> {
+        let mut buffer = sink.lock().expect("the capture buffer is not poisoned");
+        buffer.push_mono(&self.samples, self.rate);
+        Ok(self.rate)
+    }
+
+    fn stop(&mut self) {}
+}
+
+fn host_with_capture(dir: &TempDir, samples: Vec<f32>, rate: u32) -> PluginHost {
+    let capture = std::sync::Arc::new(crate::audio::AudioCapture::with_source(Box::new(
+        FakeCapture { samples, rate },
+    )));
+    PluginHost::with_capture(
+        Registry::open(dir.path().join("plugins")).expect("registry"),
+        capture,
+    )
+    .expect("host")
+}
+
+fn manifest_named(name: &str, asked: &[Capability]) -> Manifest {
+    Manifest {
+        name: name.into(),
+        ..manifest(asked)
+    }
+}
+
+fn install_and_promote_named(
+    host: &PluginHost,
+    name: &str,
+    asked: &[Capability],
+    artifact: &[u8],
+) -> u32 {
+    let number = host
+        .registry()
+        .install(&manifest_named(name, asked), artifact)
+        .expect("install");
+    host.registry().promote(name, number).expect("promote");
+    number
+}
+
+#[test]
+fn a_plugin_that_asked_for_the_microphone_cannot_load_until_it_is_granted() {
+    let dir = TempDir::new("agent-plugin-audio-grant");
+    let host = host(&dir);
+    let artifact = std::fs::read(audio_guest_artifact()).expect("artifact");
+    install_and_promote_named(&host, "audio", &[Capability::AudioCapture], &artifact);
+
+    // The guest imports `agent_host_audio_capture`. Without the grant the host
+    // does not link it, so the module cannot instantiate at all. This is the
+    // whole enforcement story: the capability is the absence of the import.
+    assert!(
+        matches!(
+            host.validate("agent", "audio"),
+            Err(Error::Plugin(PluginError::LoadFailed { .. }))
+        ),
+        "an ungranted import means the plugin cannot instantiate"
+    );
+    assert!(host.effective("agent", "audio").expect("effective").is_empty());
+
+    // With the grant, the same artifact loads.
+    host.grant("agent", "audio", Capability::AudioCapture).expect("grant");
+    let loaded = host.validate("agent", "audio").expect("the granted plugin loads");
+    assert_eq!(loaded.granted, vec![Capability::AudioCapture]);
+}
+
+#[test]
+fn a_granted_microphone_reaches_the_plugin() {
+    let dir = TempDir::new("agent-plugin-audio-call");
+    // One second of a full-scale tone at 48 kHz, which the host resamples to
+    // the capture rate before the guest sees it.
+    let host = host_with_capture(&dir, vec![1.0_f32; 48_000], 48_000);
+    let artifact = std::fs::read(audio_guest_artifact()).expect("artifact");
+    install_and_promote_named(&host, "audio", &[Capability::AudioCapture], &artifact);
+    host.grant("agent", "audio", Capability::AudioCapture).expect("grant");
+
+    let response = host
+        .execute("agent", "audio", "capture")
+        .expect("executes");
+    assert!(
+        response.contains("\"samples\":512"),
+        "the guest received the samples it asked for: {response}"
+    );
+    assert!(
+        response.contains("\"peak\":1.000000"),
+        "and the audio really crossed the boundary: {response}"
+    );
+}
+
+#[test]
+fn a_microphone_grant_does_not_carry_to_another_agent() {
+    let dir = TempDir::new("agent-plugin-audio-agents");
+    let host = host_with_capture(&dir, vec![1.0_f32; 48_000], 48_000);
+    let artifact = std::fs::read(audio_guest_artifact()).expect("artifact");
+    install_and_promote_named(&host, "audio", &[Capability::AudioCapture], &artifact);
+
+    host.grant("agent", "audio", Capability::AudioCapture).expect("grant");
+    assert!(host.execute("agent", "audio", "capture").is_ok());
+
+    assert!(
+        host.execute("code-reviewer", "audio", "capture").is_err(),
+        "a sub-agent does not inherit its parent's microphone by existing"
+    );
+}
+
+#[test]
+fn a_microphone_that_cannot_be_opened_is_reported_rather_than_silent() {
+    let dir = TempDir::new("agent-plugin-audio-busy");
+    struct BusyCapture;
+    impl crate::audio::CaptureSource for BusyCapture {
+        fn start(
+            &mut self,
+            _sink: std::sync::Arc<std::sync::Mutex<crate::audio::CaptureBuffer>>,
+        ) -> std::result::Result<u32, crate::audio::AudioError> {
+            Err(crate::audio::AudioError::DeviceBusy(
+                "the wake service holds the device".into(),
+            ))
+        }
+        fn stop(&mut self) {}
+    }
+    let capture = std::sync::Arc::new(crate::audio::AudioCapture::with_source(Box::new(
+        BusyCapture,
+    )));
+    let host = PluginHost::with_capture(
+        Registry::open(dir.path().join("plugins")).expect("registry"),
+        capture,
+    )
+    .expect("host");
+    let artifact = std::fs::read(audio_guest_artifact()).expect("artifact");
+    install_and_promote_named(&host, "audio", &[Capability::AudioCapture], &artifact);
+    host.grant("agent", "audio", Capability::AudioCapture).expect("grant");
+
+    // The guest gets a refusal, not a run of zeros that would read as a quiet
+    // room — and the refusal carries the reason the host refused.
+    let error = host
+        .execute("agent", "audio", "capture")
+        .expect_err("a device that could not be opened did not deliver samples");
+    let message = error.to_string();
+    assert!(
+        message.contains("audio capture failed"),
+        "the reason the host refused reached the caller: {message}"
+    );
+    assert!(
+        message.contains("in use"),
+        "and it names the cause rather than saying the guest declined: {message}"
+    );
+}
