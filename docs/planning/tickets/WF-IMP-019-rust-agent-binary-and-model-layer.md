@@ -72,9 +72,9 @@ Built and verified on this host. `gpui-app/` is one crate producing the `agent` 
 - `PUT /api/providers/openrouter/credential` writes `openrouter.key` at `0600`, flips `/api/models` from `inert: true` to `false`, and an empty submission removes the file — zero files remain afterwards.
 - An environment credential outranks a stored one and the shadow is reported rather than hidden.
 - An unknown provider is refused with `404` and the name, rather than being created.
-- 10 unit tests, clippy clean, no warnings.
+- 76 unit tests, clippy clean, no warnings. Seven more are `#[ignore]`d because they need a credential or a microphone.
 
-**The contract was checked against what the Settings screens actually render, and it was short.** The screens build a provider card from `id`, `label`, `summary`, `modalities`, `keySource`, `envVar`, `baseUrl`, `baseUrlEnv` and `hasCatalogue`. The Rust view carried `id`, `kind`, `endpoint`, `modalities`, `credential` and `shadowedFile`, and was missing five of them: there was no name to show, no description, no environment variable to name, no way to say a provider publishes no model list, and no way to say where a self-hosted provider lives.
+**The contract was checked against what the Settings screens actually render, and it was short.** The screens build a provider card from `id`, `label`, `summary`, `modalities`, `keySource`, `envVar`, `baseUrl`, `baseUrlEnv` and `hasCatalogue`. The Rust view carried `id`, `kind`, `endpoint`, `modalities`, `credential` and `shadowed_file`, and was missing five of them: there was no name to show, no description, no environment variable to name, no way to say a provider publishes no model list, and no way to say where a self-hosted provider lives.
 
 A field the contract does not carry does not error. It renders as a blank where a name should be, which is the failure nobody notices. So:
 
