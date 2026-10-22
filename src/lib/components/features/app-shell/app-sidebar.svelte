@@ -49,7 +49,7 @@
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton
 					size="lg"
-					tooltipContent="Lexosa"
+					tooltipContent="Agent"
 					class="group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
 				>
 					{#snippet child({ props })}
@@ -58,7 +58,7 @@
 								class="grid size-6 shrink-0 place-items-center rounded-[min(var(--radius-md),10px)] bg-primary text-xs text-primary-foreground"
 								aria-hidden="true">✦</span
 							>
-							<span class="font-bold group-data-[collapsible=icon]:hidden">Lexosa</span>
+							<span class="font-bold group-data-[collapsible=icon]:hidden">Agent</span>
 						</a>
 					{/snippet}
 				</Sidebar.MenuButton>
@@ -67,7 +67,7 @@
 	</Sidebar.Header>
 
 	<Sidebar.Content>
-		<!-- Sub-agents section: Lexosa's standing sub-agents plus the manage and
+		<!-- Sub-agents section: Agent's standing sub-agents plus the manage and
 		     expand controls. The list mirrors the sub-agent area on /agents. -->
 		<Sidebar.Group>
 			<div

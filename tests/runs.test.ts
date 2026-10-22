@@ -5,8 +5,8 @@ import { join } from 'node:path';
 
 // The coordinator resolves its state directory at load; the temp dir must exist
 // before the import so tests never touch the real installation.
-const stateDir = mkdtempSync(join(tmpdir(), 'lexia-runs-test-'));
-process.env.LEXIA_STATE_DIR = stateDir;
+const stateDir = mkdtempSync(join(tmpdir(), 'agent-runs-test-'));
+process.env.AGENT_STATE_DIR = stateDir;
 // Dynamic import exception: the state dir must exist before the module loads.
 const runs = await import('../src/lib/server/runs.js');
 

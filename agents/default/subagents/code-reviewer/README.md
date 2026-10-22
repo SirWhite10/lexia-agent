@@ -43,7 +43,7 @@ It also carries **no `[[providers]]` and no `[[use_cases]]`**. Credentials are i
 ## Validate
 
 ```sh
-bun scripts/agent.ts check lexosa-agent/subagents/code-reviewer
+bun scripts/agent.ts check agents/default/subagents/code-reviewer
 ```
 
 Checks that the structure matches the template and that no `{{TOKEN}}` was left unsubstituted.

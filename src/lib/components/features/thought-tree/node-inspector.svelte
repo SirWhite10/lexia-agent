@@ -22,7 +22,7 @@
 	} = $props();
 
 	const KINDS: { value: ThoughtNodeKind; label: string }[] = [
-		{ value: 'question', label: 'Question — something Lexosa asks itself' },
+		{ value: 'question', label: 'Question — something Agent asks itself' },
 		{ value: 'route', label: 'Route — a decision that picks a branch' },
 		{ value: 'action', label: 'Action — work to carry out' }
 	];
@@ -92,7 +92,7 @@
 				<Field.FieldLabel for="node-question">Question</Field.FieldLabel>
 				<Textarea id="node-question" name="question" bind:value={draft.question} rows={3} />
 				<Field.FieldDescription>
-					What Lexosa asks at this point in the tree.
+					What Agent asks at this point in the tree.
 				</Field.FieldDescription>
 			</Field.Field>
 

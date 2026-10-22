@@ -453,7 +453,7 @@ impl ModelProvider for OpenAiCompatible {
         credential: &Secret,
         request: TranscriptionRequest,
     ) -> Result<String> {
-        let boundary = format!("lexosa{}", request.audio.len());
+        let boundary = format!("agent{}", request.audio.len());
         let body = multipart(
             &boundary,
             &[

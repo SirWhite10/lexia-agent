@@ -49,7 +49,7 @@ export const actions: Actions = {
 		const user = await authenticate(username, password);
 
 		if (!user) return fail<AuthForm>(400, { mode: 'login', username, error: 'That username or password is not correct.' });
-		cookies.set('lexia_session', user.id, sessionCookie);
+		cookies.set('agent_session', user.id, sessionCookie);
 		redirect(303, safeReturnTo(url.searchParams.get('returnTo')));
 	},
 
@@ -72,7 +72,7 @@ export const actions: Actions = {
 
 		try {
 			const user = await createUser(username, password);
-			cookies.set('lexia_session', user.id, sessionCookie);
+			cookies.set('agent_session', user.id, sessionCookie);
 		} catch {
 			return fail<AuthForm>(409, { mode: 'setup', username, error: 'That username is already in use.' });
 		}

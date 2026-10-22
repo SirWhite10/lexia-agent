@@ -63,5 +63,5 @@ export function titleForPath(pathname: string, subAgents: SubAgent[]): string {
 	if (pathname.startsWith('/settings')) {
 		return settingsItems.find((item) => pathname === item.href)?.title ?? 'Settings';
 	}
-	return 'Lexosa';
+	return 'Agent';
 }

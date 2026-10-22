@@ -1,4 +1,4 @@
-//! `lexosa` — the agent host.
+//! `agent` — the agent host.
 //!
 //! A CLI alongside the service, because the agent is a product in its own right
 //! and not only a server for the UI. An operator needs to see which credential
@@ -6,10 +6,10 @@
 //! starting a server and opening a screen to find out.
 //!
 //! ```sh
-//! lexosa serve                 # run the HTTP surface
-//! lexosa config                # show the resolved manifest
-//! lexosa providers             # providers and where each credential comes from
-//! lexosa models                # use-cases and what they resolve to
+//! agent serve                 # run the HTTP surface
+//! agent config                # show the resolved manifest
+//! agent providers             # providers and where each credential comes from
+//! agent models                # use-cases and what they resolve to
 //! ```
 
 use std::path::PathBuf;
@@ -17,21 +17,21 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use lexosa_agent::config::split_model;
-use lexosa_agent::credentials::Credentials;
-use lexosa_agent::http::{AppState, ServerEvent, event_channel, router};
-use lexosa_agent::plugins::{Capability, PluginHost, Registry};
-use lexosa_agent::runs::Coordinator;
-use lexosa_agent::{AgentConfig, StateDir, DEFAULT_AGENT_DIR, DEFAULT_STATE_SUBDIR};
+use agent_host::config::split_model;
+use agent_host::credentials::Credentials;
+use agent_host::http::{AppState, ServerEvent, event_channel, router};
+use agent_host::plugins::{Capability, PluginHost, Registry};
+use agent_host::runs::Coordinator;
+use agent_host::{AgentConfig, StateDir, DEFAULT_AGENT_DIR, DEFAULT_STATE_SUBDIR};
 use tokio::sync::RwLock;
 
 #[derive(Parser)]
-#[command(name = "lexosa", version, about = "The Lexosa agent host")]
+#[command(name = "agent", version, about = "The Agent agent host")]
 struct Cli {
-    #[arg(long, env = "LEXOSA_AGENT_DIR", default_value = DEFAULT_AGENT_DIR)]
+    #[arg(long, env = "AGENT_AGENT_DIR", default_value = DEFAULT_AGENT_DIR)]
     agent_dir: PathBuf,
 
-    #[arg(long, env = "LEXOSA_STATE_DIR", default_value = DEFAULT_STATE_SUBDIR)]
+    #[arg(long, env = "AGENT_STATE_DIR", default_value = DEFAULT_STATE_SUBDIR)]
     state_dir: PathBuf,
 
     #[command(subcommand)]
@@ -51,7 +51,7 @@ enum PluginsCommand {
 enum Command {
     /// Serve the HTTP surface the clients are written against.
     Serve {
-        #[arg(long, env = "LEXOSA_BIND", default_value = "127.0.0.1:8787")]
+        #[arg(long, env = "AGENT_BIND", default_value = "127.0.0.1:8787")]
         bind: String,
     },
     /// Show the resolved manifest: what the host read, not what the file says.
@@ -73,7 +73,7 @@ async fn main() -> Result<()> {
                 // Both crates emit logs: the binary traces startup and shutdown,
                 // the library traces configuration and provider failures. Naming
                 // only one silently discards the other.
-                "lexosa=info,lexosa_agent=info,tower_http=info,warn".into()
+                "agent=info,agent_host=info,tower_http=info,warn".into()
             }),
         )
         .init();

@@ -13,7 +13,7 @@ it, so a SvelteKit route cannot embed it. This directory therefore reproduces
 GPUI Kit's *component layer and visual language* in Svelte 5 so the interface can
 be judged in the browser. It is a preview surface, not a second design system:
 nothing outside `/kit` imports from here, and `kit.css` scopes every token to
-`.kit` so the Lexia design tokens in `src/routes/layout.css` are untouched.
+`.kit` so the Agent design tokens in `src/routes/layout.css` are untouched.
 
 ## Licence
 

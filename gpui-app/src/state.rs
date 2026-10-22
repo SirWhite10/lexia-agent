@@ -18,7 +18,7 @@
 //! ```
 //!
 //! The agent *data* — manifest, instructions, facts, skills — is not here. It is
-//! in `lexosa-agent/`, authored and tracked, and the host watches it. This
+//! in `agents/default/`, authored and tracked, and the host watches it. This
 //! directory is only what the host writes.
 
 use std::fs;
@@ -69,7 +69,7 @@ impl StateDir {
 
     /// The run store, beside the credential directory rather than inside the
     /// old `app-data/state` tree — the TypeScript host still owns
-    /// `lexia.sqlite` until WF-IMP-025 removes it, and two writers on one
+    /// `agent.sqlite` until WF-IMP-025 removes it, and two writers on one
     /// database is the failure this migration exists to prevent.
     /// The plugin generation store: content-addressed artifacts, the registry,
     /// and the active pointers.

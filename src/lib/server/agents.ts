@@ -3,11 +3,11 @@ import { dirname, join, resolve } from 'node:path';
 import { Database } from 'bun:sqlite';
 
 // Conversation and sub-agent state (WF-IMP-003): messages in the massive chat
-// and standing sub-agents with versioned Lexosa-authored prompts. The memory
+// and standing sub-agents with versioned Agent-authored prompts. The memory
 // corpus lives in memory.ts against the same state database. Same module
 // pattern as auth.ts (own connection per module).
-const stateDir = resolve(process.env.LEXIA_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
-const databasePath = join(stateDir, 'lexia.sqlite');
+const stateDir = resolve(process.env.AGENT_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
+const databasePath = join(stateDir, 'agent.sqlite');
 mkdirSync(dirname(databasePath), { recursive: true });
 
 const database = new Database(databasePath);
@@ -16,7 +16,7 @@ database.run('PRAGMA foreign_keys = ON;');
 database.run(`
 	CREATE TABLE IF NOT EXISTS messages (
 		id TEXT PRIMARY KEY,
-		author_kind TEXT NOT NULL CHECK (author_kind IN ('user', 'lexia', 'sub_agent')),
+		author_kind TEXT NOT NULL CHECK (author_kind IN ('user', 'agent', 'sub_agent')),
 		author_id TEXT,
 		addressee_id TEXT,
 		run_id TEXT,
@@ -48,7 +48,7 @@ database.run(`
 	DROP TABLE IF EXISTS agents;
 `);
 
-export type MessageAuthorKind = 'user' | 'lexia' | 'sub_agent';
+export type MessageAuthorKind = 'user' | 'agent' | 'sub_agent';
 export type SubAgentStatus = 'standing' | 'retired';
 
 export type Message = {
@@ -222,7 +222,7 @@ export function listSubAgentPromptVersions(id: string): SubAgentPromptVersion[] 
 		}));
 }
 
-/** Lexosa authors the system prompt; the host persists it as version 1. */
+/** Agent authors the system prompt; the host persists it as version 1. */
 export function createSubAgent(input: {
 	name: string;
 	systemPrompt: string;

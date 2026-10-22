@@ -27,7 +27,7 @@ export class OpenRouterError extends Error {
 export async function openRouterFetch(url: string, init: RequestInit = {}, timeoutMs = 25_000): Promise<Response> {
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
-		throw new OpenRouterError('OpenRouter is not configured on the Lexosa host.');
+		throw new OpenRouterError('OpenRouter is not configured on the Agent host.');
 	}
 
 	let response: Response;
@@ -69,7 +69,7 @@ export async function openRouterFetch(url: string, init: RequestInit = {}, timeo
 export async function testOpenRouterModel(modelId: string): Promise<OpenRouterTestResult> {
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
-		throw new OpenRouterError('OpenRouter is not configured on the Lexosa host.');
+		throw new OpenRouterError('OpenRouter is not configured on the Agent host.');
 	}
 
 	let response: Response;
@@ -147,7 +147,7 @@ const EMBEDDINGS_URL = 'https://openrouter.ai/api/v1/embeddings';
 export async function embedOpenRouterText(model: string, text: string): Promise<number[]> {
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
-		throw new OpenRouterError('OpenRouter is not configured on the Lexosa host.');
+		throw new OpenRouterError('OpenRouter is not configured on the Agent host.');
 	}
 
 	let response: Response;
@@ -210,7 +210,7 @@ export async function completeOpenRouter(
 ): Promise<string> {
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
-		throw new OpenRouterError('OpenRouter is not configured on the Lexosa host.');
+		throw new OpenRouterError('OpenRouter is not configured on the Agent host.');
 	}
 
 	let response: Response;

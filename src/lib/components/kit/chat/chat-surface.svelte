@@ -106,7 +106,7 @@
 							...messages,
 							{
 								id: `m${Date.now()}`,
-								authorKind: 'lexia',
+								authorKind: 'agent',
 								body: 'Done. Two sub-agents ran under it, and the artifacts they produced are below.',
 								createdAt: Date.now(),
 								runId,
@@ -205,7 +205,7 @@
 
 		{#if visibleMessages.length === 0 && runs.length === 0}
 			<div class="w-full rounded-(--kit-radius-lg) border border-(--kit-border) bg-(--kit-card) p-(--kit-space-lg)">
-				<p class="mb-(--kit-space-xs) text-[length:var(--kit-text-xs)] leading-(--kit-leading-xs) font-bold tracking-[0.16em] text-[color:var(--kit-muted-foreground)]">LEXIA</p>
+				<p class="mb-(--kit-space-xs) text-[length:var(--kit-text-xs)] leading-(--kit-leading-xs) font-bold tracking-[0.16em] text-[color:var(--kit-muted-foreground)]">AGENT</p>
 				<p class="text-[length:var(--kit-text-sm)] leading-(--kit-leading-sm) text-[color:var(--kit-muted-foreground)]">
 					Nothing here yet. Ask for something and it becomes the first run.
 				</p>

@@ -25,7 +25,7 @@ export const actions: Actions = {
 	saveKey: async ({ request }) => {
 		const form = await request.formData();
 		const provider = providerById(String(form.get('provider') ?? ''));
-		if (!provider) return fail(400, { provider: '', error: 'That provider is not one Lexosa knows.' });
+		if (!provider) return fail(400, { provider: '', error: 'That provider is not one Agent knows.' });
 
 		const apiKey = String(form.get('apiKey') ?? '');
 		let changed = false;

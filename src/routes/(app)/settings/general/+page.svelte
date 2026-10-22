@@ -15,7 +15,7 @@
 </script>
 
 <svelte:head>
-	<title>General — Lexosa</title>
+	<title>General — Agent</title>
 	<meta name="description" content="Workspace preferences for this device." />
 </svelte:head>
 
@@ -25,7 +25,7 @@
 	<Card.Root>
 		<Card.Header>
 			<Card.Title>Appearance</Card.Title>
-			<Card.Description>Lexosa is dark-first; light mode is an explicit alternative.</Card.Description>
+			<Card.Description>Agent is dark-first; light mode is an explicit alternative.</Card.Description>
 		</Card.Header>
 		<Card.Content>
 			<div class="flex items-center justify-between gap-4">
@@ -71,7 +71,7 @@
 
 	<Card.Root>
 		<Card.Header>
-			<Card.Title>Lexosa</Card.Title>
+			<Card.Title>Agent</Card.Title>
 			<Card.Description>Server-side agent harness — Jev routes, EVE executes.</Card.Description>
 		</Card.Header>
 	</Card.Root>

@@ -18,8 +18,8 @@
 </script>
 
 <svelte:head>
-	<title>Sub-agents — Lexosa</title>
-	<meta name="description" content="Standing sub-agents of Lexosa" />
+	<title>Sub-agents — Agent</title>
+	<meta name="description" content="Standing sub-agents of Agent" />
 </svelte:head>
 
 {#snippet renameForm(sub: SubAgent)}
@@ -103,7 +103,7 @@
 
 <section class="mx-auto w-full max-w-2xl flex-1 space-y-4 px-5 py-6" aria-label="Sub-agents">
 	<p class="mb-5 text-sm text-muted-foreground">
-		Standing sub-agents Lexosa delegates work to.
+		Standing sub-agents Agent delegates work to.
 	</p>
 
 	{#if data.subAgents.length === 0}
@@ -112,7 +112,7 @@
 				<Empty.Media variant="icon"><BotIcon /></Empty.Media>
 				<Empty.Title>No sub-agents yet</Empty.Title>
 				<Empty.Description>
-					Lexosa creates a sub-agent when a request needs parallel work.
+					Agent creates a sub-agent when a request needs parallel work.
 				</Empty.Description>
 			</Empty.Header>
 		</Empty.Root>
@@ -150,7 +150,7 @@
 		<p class="border-b border-border px-4 py-3 text-sm font-medium">Agent tasks</p>
 		{#if data.agentTasks.length === 0}
 			<p class="px-4 py-3 text-sm text-muted-foreground">
-				No delegated tasks yet. Tasks appear here when Lexosa hands work to a sub-agent.
+				No delegated tasks yet. Tasks appear here when Agent hands work to a sub-agent.
 			</p>
 		{:else}
 			<ul class="divide-y divide-border">

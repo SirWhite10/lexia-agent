@@ -1,6 +1,6 @@
 # Plugins
 
-Plugins are WebAssembly Components loaded through Wasmtime. They provide capabilities the host does not have built in. See [ADR 0005](../../docs/adr/0005-rust-agent-host-and-wasm-plugins.md) for the architecture and [WF-IMP-021](../../docs/planning/tickets/WF-IMP-021-wasmtime-plugin-host.md) for the implementation.
+Plugins are WebAssembly Components loaded through Wasmtime. They provide capabilities the host does not have built in. See [ADR 0005](../../../docs/adr/0005-rust-agent-host-and-wasm-plugins.md) for the architecture and [WF-IMP-021](../../../docs/planning/tickets/WF-IMP-021-wasmtime-plugin-host.md) for the implementation.
 
 ```text
 plugins/

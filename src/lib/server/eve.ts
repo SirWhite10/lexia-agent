@@ -4,7 +4,7 @@
 // The base URL is configuration because the EVE process is a separate
 // process from the host, spawned by eve-supervisor.ts (ADR 0003). `eve dev`
 // serves it on 2000 by default.
-const EVE_BASE_URL = (process.env.LEXIA_EVE_URL ?? 'http://127.0.0.1:2000').replace(/\/$/, '');
+const EVE_BASE_URL = (process.env.AGENT_EVE_URL ?? 'http://127.0.0.1:2000').replace(/\/$/, '');
 const SESSION_TTL_MS = 60_000;
 
 export type EveReply = {

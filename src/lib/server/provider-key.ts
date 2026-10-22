@@ -11,7 +11,7 @@ import { PROVIDERS, providerById } from './provider-registry.js';
 // Hydration has to happen before the EVE supervisor spawns: EVE inherits this
 // process's environment once and never re-reads it, which is why saving
 // OpenRouter's key restarts it.
-const stateDir = resolve(process.env.LEXIA_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
+const stateDir = resolve(process.env.AGENT_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
 
 type ProviderKeyState = { bootEnv: Record<string, string | null> };
 
@@ -19,7 +19,7 @@ type ProviderKeyState = { bootEnv: Record<string, string | null> };
 // on every edit while the process environment survives. Deciding precedence from
 // the live value instead would let a key this module wrote earlier masquerade as
 // an environment key and permanently outrank the file.
-const state = ((globalThis as typeof globalThis & { __lexosaProviderKeys?: ProviderKeyState }).__lexosaProviderKeys ??= {
+const state = ((globalThis as typeof globalThis & { __agentProviderKeys?: ProviderKeyState }).__agentProviderKeys ??= {
 	bootEnv: Object.fromEntries(PROVIDERS.map((provider) => [provider.id, process.env[provider.envVar] ?? null]))
 });
 

@@ -12,7 +12,7 @@ import { loadPersonality, savePersonality } from './memory.js';
 // mutable per-installation state and is written through savePersonality so the
 // file keeps the format reflection already maintains.
 
-const EVE_ROOT = process.env.LEXIA_EVE_ROOT ?? join(process.cwd(), 'my-agent');
+const EVE_ROOT = process.env.AGENT_EVE_ROOT ?? join(process.cwd(), 'my-agent');
 
 export type BootstrapInput = {
 	/** What the agent is called; becomes the instruction heading and chat identity. */
@@ -46,7 +46,7 @@ export function bootstrapStatus(): BootstrapStatus {
 	return {
 		bootstrapped: existsSync(instructions) && traits.length > 0,
 		instructionsPath: instructions,
-		personalityPath: join(resolve(process.env.LEXIA_STATE_DIR ?? join(process.cwd(), 'app-data/state')), 'agent/personality.md'),
+		personalityPath: join(resolve(process.env.AGENT_STATE_DIR ?? join(process.cwd(), 'app-data/state')), 'agent/personality.md'),
 		existingTraits: traits.length
 	};
 }
@@ -62,7 +62,7 @@ export function renderInstructions(input: BootstrapInput): string {
 	const sections = [
 		'# Identity',
 		'',
-		`You are ${input.name.trim() || 'Lexosa'}, a personal agent for this installation.`,
+		`You are ${input.name.trim() || 'Agent'}, a personal agent for this installation.`,
 		'',
 		input.purpose.trim() || 'You help with whatever the user asks.',
 		'',

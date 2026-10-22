@@ -8,16 +8,16 @@ import { dirname, join, resolve } from 'node:path';
 // operator to babysit a second terminal (ADR 0003).
 //
 // There is no release mode. `eve build`, `eve start`, and release folders are
-// out of scope for V1; changing the agent is an edit under LEXIA_EVE_ROOT and
+// out of scope for V1; changing the agent is an edit under AGENT_EVE_ROOT and
 // EVE reloads it. Do not reintroduce a mode switch here without a new ADR.
 //
 // The supervisor is a process-level concern, not a model concern: the host
 // still never calls a model itself (eve.ts owns that), it only keeps the EVE
 // process alive so eve.ts can reach it over HTTP.
 
-const EVE_PORT = Number(process.env.LEXIA_EVE_PORT ?? 2000);
-const EVE_URL = (process.env.LEXIA_EVE_URL ?? `http://127.0.0.1:${EVE_PORT}`).replace(/\/$/, '');
-const EVE_ROOT = resolve(process.env.LEXIA_EVE_ROOT ?? join(process.cwd(), 'my-agent'));
+const EVE_PORT = Number(process.env.AGENT_EVE_PORT ?? 2000);
+const EVE_URL = (process.env.AGENT_EVE_URL ?? `http://127.0.0.1:${EVE_PORT}`).replace(/\/$/, '');
+const EVE_ROOT = resolve(process.env.AGENT_EVE_ROOT ?? join(process.cwd(), 'my-agent'));
 const HEALTH_INTERVAL_MS = 5_000;
 const RESTART_BACKOFF_MS = 2_000;
 
@@ -37,7 +37,7 @@ type SupervisorState = {
 // module-level state a reload orphans the running child, leaks a health timer,
 // and leaves `restartEve` reporting a restart that never happened — so the
 // state lives on globalThis and a hot reload adopts the process it started.
-const state = ((globalThis as typeof globalThis & { __lexosaEve?: SupervisorState }).__lexosaEve ??= {
+const state = ((globalThis as typeof globalThis & { __agentEve?: SupervisorState }).__agentEve ??= {
 	supervisor: null,
 	healthTimer: null,
 	evePid: null,
@@ -118,7 +118,7 @@ function delay(ms: number): Promise<void> {
 function spawnEve(): ChildProcess {
 	// `--no-ui` keeps EVE a headless server; the host is the only front end.
 	// EVE binds $PORT and then 2000, never this host's own idea of where EVE
-	// lives, so the documented LEXIA_EVE_PORT has to be handed over explicitly:
+	// lives, so the documented AGENT_EVE_PORT has to be handed over explicitly:
 	// without it two hosts on one machine contend for the same agent port.
 	const args = ['dev', '--no-ui', '--port', String(EVE_PORT)];
 	// Prefer the eve installed in the agent project so the version this

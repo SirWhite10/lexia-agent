@@ -220,7 +220,7 @@
 		<ComposerInline
 			value={doc.text}
 			catalog={doc.catalog}
-			placeholder={blockedReason ?? 'Tell Lexia to do something…'}
+			placeholder={blockedReason ?? 'Tell Agent to do something…'}
 			onsend={send}
 			onapi={(api) => (fieldApi = api)}
 			onchange={(text) => record({ ...doc, text }, 'typing')}

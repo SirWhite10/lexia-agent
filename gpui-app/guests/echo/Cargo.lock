@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "lexosa-plugin-echo"
+name = "agent-plugin-echo"
 version = "0.1.0"

@@ -10,7 +10,7 @@
 
 import type { Artifact } from '../artifacts/types.js';
 
-export type ChatAuthor = 'user' | 'lexia' | 'system';
+export type ChatAuthor = 'user' | 'agent' | 'system';
 
 export type ActionStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
 

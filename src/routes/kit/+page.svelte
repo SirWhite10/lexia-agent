@@ -118,7 +118,7 @@
 				href="/"
 				class="hidden h-[24px] items-center rounded-(--kit-radius-md) border border-(--kit-border) px-(--kit-space-sm) text-[length:var(--kit-text-xs)] font-medium text-[color:var(--kit-muted-foreground)] transition-colors duration-(--kit-duration-fast) hover:bg-(--kit-muted) hover:text-[color:var(--kit-foreground)] sm:inline-flex"
 			>
-				Back to Lexia
+				Back to Agent
 			</a>
 		</div>
 	</header>

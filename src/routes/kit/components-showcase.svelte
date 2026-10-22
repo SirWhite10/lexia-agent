@@ -114,7 +114,7 @@
 
 					<label class="flex flex-col gap-(--kit-space-xs)">
 						<span class="text-[length:var(--kit-text-xs)] text-[color:var(--kit-muted-foreground)]">Notes for the turn</span>
-						<Textarea rows={3} placeholder="What should Lexia do with this run?" aria-label="Notes for the turn" />
+						<Textarea rows={3} placeholder="What should Agent do with this run?" aria-label="Notes for the turn" />
 					</label>
 
 					<div class="flex flex-wrap items-center gap-(--kit-space-xl)">
@@ -170,8 +170,8 @@
 				</div>
 				<Separator />
 				<div class="flex flex-wrap items-center gap-(--kit-space-md)">
-					<Avatar name="Lexia" size="sm" />
-					<Avatar name="Lexia" size="md" />
+					<Avatar name="Agent" size="sm" />
+					<Avatar name="Agent" size="md" />
 					<Avatar name="Scout" size="lg" />
 					<Avatar name="Reviewer" size="xl" />
 				</div>

@@ -1,6 +1,6 @@
-# Lexosa
+# Agent
 
-Lexosa is a self-extensible agent: a permanent Rust host, capabilities supplied as WebAssembly Components, provider-independent model access, and an interface built once and shipped as both a native binary and a browser bundle ([ADR 0005](./docs/adr/0005-rust-agent-host-and-wasm-plugins.md), [ADR 0004](./docs/adr/0004-rust-client-all-platforms.md)).
+Agent is a self-extensible agent: a permanent Rust host, capabilities supplied as WebAssembly Components, provider-independent model access, and an interface built once and shipped as both a native binary and a browser bundle ([ADR 0005](./docs/adr/0005-rust-agent-host-and-wasm-plugins.md), [ADR 0004](./docs/adr/0004-rust-client-all-platforms.md)).
 
 **That architecture is being built, not running.** What runs today is the previous one: a SvelteKit harness with a TypeScript agent runtime (`EVE`) executed from `my-agent/`. That path is superseded and is removed by [WF-IMP-025](./docs/planning/tickets/WF-IMP-025-retire-eve-and-the-typescript-agent.md). Do not build on it.
 
@@ -24,12 +24,12 @@ bun run test:unit
 
 ## The agent
 
-The agent's data lives in [`lexosa-agent/`](./lexosa-agent/README.md) — its manifest, instructions, memory, skills, sub-agents, plugin pointers and configuration. It is data, not source: the host watches it, so a change applies on the next event with no rebuild.
+The agent's data lives in [`agents/default/`](./agents/default/README.md) — its manifest, instructions, memory, skills, sub-agents, plugin pointers and configuration. It is data, not source: the host watches it, so a change applies on the next event with no rebuild.
 
 Create an agent from the template rather than by hand:
 
 ```sh
-bun scripts/agent.ts new <name>      # lexosa-agent/subagents/<name>/
+bun scripts/agent.ts new <name>      # agents/default/subagents/<name>/
 bun scripts/agent.ts check <dir>     # structure and substitution check
 ```
 
@@ -43,5 +43,5 @@ Read [AGENTS.md](./AGENTS.md) first. It carries the operating rules and the orde
 - [CONTENT.md](./CONTENT.md) — language, intent, prompt-facing material
 - [OPERATIONS.md](./OPERATIONS.md) — rules, workflows, tooling
 - [CONTEXT.md](./CONTEXT.md) — canonical domain glossary
-- [lexosa-agent/README.md](./lexosa-agent/README.md) — the agent data directory and its watch contract
+- [agents/default/README.md](./agents/default/README.md) — the agent data directory and its watch contract
 - [DESIGN.md](./DESIGN.md)

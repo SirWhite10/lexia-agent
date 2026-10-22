@@ -1,4 +1,4 @@
-//! The Lexosa agent host.
+//! The Agent agent host.
 //!
 //! One crate, two distributions ([ADR 0004](../../docs/adr/0004-rust-client-all-platforms.md),
 //! [ADR 0005](../../docs/adr/0005-rust-agent-host-and-wasm-plugins.md)): the `cdylib`
@@ -32,18 +32,18 @@ pub use credentials::{CredentialStatus, Credentials, Source};
 pub use error::{Error, Result, Secret};
 pub use state::StateDir;
 
-/// The default agent directory, when `LEXOSA_AGENT_DIR` is not set.
+/// The default agent directory, when `AGENT_AGENT_DIR` is not set.
 ///
 /// Resolved against the working directory so a checkout runs without
 /// configuration, and overridable because a second agent on the same machine
 /// needs its own.
-pub const DEFAULT_AGENT_DIR: &str = "lexosa-agent";
+pub const DEFAULT_AGENT_DIR: &str = "agents/default";
 
-/// The default state directory, when `LEXOSA_STATE_DIR` is not set.
+/// The default state directory, when `AGENT_STATE_DIR` is not set.
 ///
 /// Deliberately *inside* the old `app-data/state` tree but in its own
 /// subdirectory. The TypeScript host is still running and still owns
-/// `app-data/state/lexia.sqlite` until [WF-IMP-025] removes it; pointing both at
+/// `app-data/state/agent.sqlite` until [WF-IMP-025] removes it; pointing both at
 /// one directory would put two implementations in a position to write the same
 /// file, which is the failure this whole migration is arranged to avoid.
 pub const DEFAULT_STATE_SUBDIR: &str = "app-data/state/agent-host";
@@ -54,8 +54,8 @@ mod tests {
 
     const MINIMAL: &str = r#"
 [agent]
-name = "lexosa"
-title = "Lexosa"
+name = "agent"
+title = "Agent"
 description = "The main agent."
 
 [memory]
@@ -70,7 +70,7 @@ profile = "standard"
     #[test]
     fn parses_a_minimal_manifest() {
         let config = AgentConfig::parse(MINIMAL).expect("valid");
-        assert_eq!(config.agent.name, "lexosa");
+        assert_eq!(config.agent.name, "agent");
         assert_eq!(config.sandbox.profile, "standard");
         assert!(config.providers.is_empty());
     }
@@ -260,7 +260,7 @@ key_file = "openrouter.key"
     }
 
     fn temp_state(name: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!("lexosa-test-{name}"));
+        let dir = std::env::temp_dir().join(format!("agent-test-{name}"));
         let _ = std::fs::remove_dir_all(&dir);
         dir
     }

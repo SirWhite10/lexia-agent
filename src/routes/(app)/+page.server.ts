@@ -151,7 +151,7 @@ export const actions: Actions = {
 				if (answer.failed || !answer.reply) {
 					failAction(reply.id, lease.leaseId, answer.reply || 'EVE returned no reply.');
 				} else {
-					appendMessage({ authorKind: 'lexia', body: answer.reply, runId: run.id });
+					appendMessage({ authorKind: 'agent', body: answer.reply, runId: run.id });
 					completeAction(reply.id, lease.leaseId, answer.reply);
 				}
 			} catch (error) {

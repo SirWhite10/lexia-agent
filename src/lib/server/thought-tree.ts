@@ -1,12 +1,12 @@
 import { join, resolve } from 'node:path';
 import { Database } from 'bun:sqlite';
 
-// The thought tree is how Lexosa's routing reads: a question asked at the root,
+// The thought tree is how Agent's routing reads: a question asked at the root,
 // the answers it admits, and the branch each answer opens. It is editable by the
 // operator in the UI and, once the runtime router exists, by the agent itself —
 // which is why it is plain rows with stable ids rather than an opaque document.
-const stateDir = resolve(process.env.LEXIA_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
-const database = new Database(join(stateDir, 'lexia.sqlite'));
+const stateDir = resolve(process.env.AGENT_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
+const database = new Database(join(stateDir, 'agent.sqlite'));
 database.run(`
 	CREATE TABLE IF NOT EXISTS thought_nodes (
 		id TEXT PRIMARY KEY,
@@ -82,7 +82,7 @@ function parseOptions(raw: string): string[] {
  * step that exists in code, not an aspiration: capture and retrieval come from
  * turn.ts, the slot order is prompt.ts's cache contract, the run and its actions
  * are built by the chat action, and reflection runs on the boundary defined in
- * turn.ts. A new workspace starts from this so the editor opens on how Lexosa
+ * turn.ts. A new workspace starts from this so the editor opens on how Agent
  * already thinks rather than on placeholders.
  */
 const DEFAULT_PIPELINE: Omit<ThoughtNodeInput, 'parentId'>[] = [

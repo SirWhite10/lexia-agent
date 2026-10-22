@@ -184,14 +184,14 @@ mod tests {
     #[test]
     fn an_undecided_capability_is_denied_not_pending() {
         let ledger = ConsentLedger::new();
-        assert!(!ledger.allows("lexosa", "echo", Capability::Log));
+        assert!(!ledger.allows("agent", "echo", Capability::Log));
         assert_eq!(
-            ledger.decision("lexosa", "echo", Capability::Log),
+            ledger.decision("agent", "echo", Capability::Log),
             Decision::Denied,
             "absent means denied; there is no pending state"
         );
         assert!(
-            !ledger.was_decided("lexosa", "echo", Capability::Log),
+            !ledger.was_decided("agent", "echo", Capability::Log),
             "and it is distinguishable from a recorded refusal"
         );
     }
@@ -199,24 +199,24 @@ mod tests {
     #[test]
     fn a_denial_is_recorded_and_distinguishable_from_absence() {
         let mut ledger = ConsentLedger::new();
-        ledger.deny("lexosa", "echo", Capability::Shell);
-        assert!(ledger.was_decided("lexosa", "echo", Capability::Shell));
+        ledger.deny("agent", "echo", Capability::Shell);
+        assert!(ledger.was_decided("agent", "echo", Capability::Shell));
         assert_eq!(
-            ledger.decision("lexosa", "echo", Capability::Shell),
+            ledger.decision("agent", "echo", Capability::Shell),
             Decision::Denied
         );
-        assert!(!ledger.was_decided("lexosa", "echo", Capability::MemoryRead));
+        assert!(!ledger.was_decided("agent", "echo", Capability::MemoryRead));
     }
 
     #[test]
     fn effective_grants_are_the_intersection_of_request_and_consent() {
         let mut ledger = ConsentLedger::new();
         // Granted, but the plugin never asked for it: grants nothing.
-        ledger.grant("lexosa", "echo", Capability::MemoryWrite);
+        ledger.grant("agent", "echo", Capability::MemoryWrite);
         // Asked for, but never granted: refused.
-        ledger.grant("lexosa", "echo", Capability::Log);
+        ledger.grant("agent", "echo", Capability::Log);
 
-        let effective = ledger.effective("lexosa", "echo", &requested());
+        let effective = ledger.effective("agent", "echo", &requested());
         assert_eq!(
             effective,
             vec![Capability::Log],
@@ -229,8 +229,8 @@ mod tests {
     #[test]
     fn a_grant_does_not_follow_the_plugin_to_another_agent() {
         let mut ledger = ConsentLedger::new();
-        ledger.grant("lexosa", "echo", Capability::Shell);
-        assert!(ledger.allows("lexosa", "echo", Capability::Shell));
+        ledger.grant("agent", "echo", Capability::Shell);
+        assert!(ledger.allows("agent", "echo", Capability::Shell));
         assert!(
             !ledger.allows("code-reviewer", "echo", Capability::Shell),
             "a sub-agent's reach must not be inherited by existing"
@@ -240,19 +240,19 @@ mod tests {
     #[test]
     fn revocation_reports_what_to_deactivate_immediately() {
         let mut ledger = ConsentLedger::new();
-        ledger.grant("lexosa", "echo", Capability::Log);
-        ledger.grant("lexosa", "echo", Capability::Shell);
-        ledger.deny("lexosa", "echo", Capability::HttpGet);
+        ledger.grant("agent", "echo", Capability::Log);
+        ledger.grant("agent", "echo", Capability::Shell);
+        ledger.deny("agent", "echo", Capability::HttpGet);
 
-        let revoked = ledger.revoke_plugin("lexosa", "echo");
+        let revoked = ledger.revoke_plugin("agent", "echo");
         assert_eq!(
             revoked,
             vec![Capability::Log, Capability::Shell],
             "only grants are revoked; a denial was never a grant"
         );
         for capability in [Capability::Log, Capability::Shell] {
-            assert!(!ledger.allows("lexosa", "echo", capability));
-            assert!(ledger.was_decided("lexosa", "echo", capability));
+            assert!(!ledger.allows("agent", "echo", capability));
+            assert!(ledger.was_decided("agent", "echo", capability));
         }
         assert!(
             ledger.allows("other", "echo", Capability::Log).eq(&false),
@@ -263,21 +263,21 @@ mod tests {
     #[test]
     fn revoking_one_capability_leaves_the_others() {
         let mut ledger = ConsentLedger::new();
-        ledger.grant("lexosa", "echo", Capability::Log);
-        ledger.grant("lexosa", "echo", Capability::Shell);
+        ledger.grant("agent", "echo", Capability::Log);
+        ledger.grant("agent", "echo", Capability::Shell);
 
-        let revoked = ledger.revoke_agent_plugin("lexosa", "echo", Some(Capability::Shell));
+        let revoked = ledger.revoke_agent_plugin("agent", "echo", Some(Capability::Shell));
         assert_eq!(revoked, vec![Capability::Shell]);
-        assert!(ledger.allows("lexosa", "echo", Capability::Log));
-        assert!(!ledger.allows("lexosa", "echo", Capability::Shell));
+        assert!(ledger.allows("agent", "echo", Capability::Log));
+        assert!(!ledger.allows("agent", "echo", Capability::Shell));
     }
 
     #[test]
     fn a_later_grant_replaces_an_earlier_denial() {
         let mut ledger = ConsentLedger::new();
-        ledger.deny("lexosa", "echo", Capability::Shell);
-        assert!(!ledger.allows("lexosa", "echo", Capability::Shell));
-        ledger.grant("lexosa", "echo", Capability::Shell);
-        assert!(ledger.allows("lexosa", "echo", Capability::Shell));
+        ledger.deny("agent", "echo", Capability::Shell);
+        assert!(!ledger.allows("agent", "echo", Capability::Shell));
+        ledger.grant("agent", "echo", Capability::Shell);
+        assert!(ledger.allows("agent", "echo", Capability::Shell));
     }
 }

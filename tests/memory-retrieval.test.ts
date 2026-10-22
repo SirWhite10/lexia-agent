@@ -5,8 +5,8 @@ import { join } from 'node:path';
 
 // The memory module resolves its state directory at load; the temp dir must be
 // in place before the import so tests never touch the real installation.
-const stateDir = mkdtempSync(join(tmpdir(), 'lexia-memory-test-'));
-process.env.LEXIA_STATE_DIR = stateDir;
+const stateDir = mkdtempSync(join(tmpdir(), 'agent-memory-test-'));
+process.env.AGENT_STATE_DIR = stateDir;
 // Dynamic import exception: the state dir must exist before the module loads.
 const memory = await import('../src/lib/server/memory.js');
 
@@ -188,7 +188,7 @@ describe('re-index after an embedding model change', () => {
 describe('reflection', () => {
 	test('distills a fact into a versioned row plus markdown and rewrites personality traits', async () => {
 		const result = await memory.reflect({
-			transcript: 'user: turn off the bedroom lights\nlexia: done',
+			transcript: 'user: turn off the bedroom lights\nagent: done',
 			knownFacts: '',
 			callModel: async () =>
 				JSON.stringify({
@@ -213,7 +213,7 @@ describe('reflection', () => {
 
 	test('preserves the first-observed date of a trait that survives a rewrite', async () => {
 		await memory.reflect({
-			transcript: 'user: more\nlexia: ok',
+			transcript: 'user: more\nagent: ok',
 			knownFacts: '',
 			callModel: async () =>
 				JSON.stringify({ facts: [], traits: ['answers concisely', 'asks before acting'] }),

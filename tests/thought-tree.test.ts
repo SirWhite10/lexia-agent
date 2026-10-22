@@ -3,10 +3,10 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-// thought-tree.ts resolves its database from LEXIA_STATE_DIR when the module
+// thought-tree.ts resolves its database from AGENT_STATE_DIR when the module
 // loads, so the temp directory has to exist before the import.
-const workspace = mkdtempSync(join(tmpdir(), 'lexosa-tree-test-'));
-process.env.LEXIA_STATE_DIR = workspace;
+const workspace = mkdtempSync(join(tmpdir(), 'agent-tree-test-'));
+process.env.AGENT_STATE_DIR = workspace;
 const tree = await import('../src/lib/server/thought-tree.js');
 
 afterAll(() => {

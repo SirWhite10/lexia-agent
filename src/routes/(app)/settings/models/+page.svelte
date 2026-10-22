@@ -159,8 +159,8 @@
 </script>
 
 <svelte:head>
-	<title>Models — Lexosa</title>
-	<meta name="description" content="Map use-cases to provider models and test them from the Lexosa server." />
+	<title>Models — Agent</title>
+	<meta name="description" content="Map use-cases to provider models and test them from the Agent server." />
 </svelte:head>
 
 <section class="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-5 py-6" aria-label="Models">
@@ -180,7 +180,7 @@
 		</Card.Header>
 		<Card.Content>
 			<p class="mb-4 rounded-md border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
-				These assignments route work on this Lexosa host. EVE is a separate process that compiles
+				These assignments route work on this Agent host. EVE is a separate process that compiles
 				its own model from its authored agent source at boot, so it keeps running that model
 				until the router starts consuming the assignments made here.
 			</p>

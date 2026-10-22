@@ -6,7 +6,7 @@ One directory per standing sub-agent, made from the template:
 bun scripts/agent.ts new researcher
 ```
 
-Each is a complete agent directory with the same shape as `lexosa-agent/` itself — its own manifest, instructions, memory scope, skills and capability list — living under a narrower grant.
+Each is a complete agent directory with the same shape as `agents/default/` itself — its own manifest, instructions, memory scope, skills and capability list — living under a narrower grant.
 
 ## Standing and one-shot
 

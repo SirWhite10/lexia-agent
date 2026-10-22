@@ -297,8 +297,8 @@
 </script>
 
 <svelte:head>
-	<title>Lexosa</title>
-	<meta name="description" content="Lexosa and its standing sub-agents" />
+	<title>Agent</title>
+	<meta name="description" content="Agent and its standing sub-agents" />
 </svelte:head>
 
 
@@ -306,7 +306,7 @@
 <section class="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-2 pt-6" aria-label="Chat">
 	<div class="mb-2 flex flex-wrap items-center justify-between gap-3">
 		<p class="min-w-0 flex-1 text-sm text-muted-foreground">
-			One conversation with Lexosa. It remembers, and it can spin up sub-agents.
+			One conversation with Agent. It remembers, and it can spin up sub-agents.
 		</p>
 		<Button href="/agents" variant="outline" size="sm">Sub-agents</Button>
 	</div>
@@ -342,7 +342,7 @@
 		{#if data.messages.length === 0}
 			{#if data.bootstrapped}
 				<div class="rounded-lg border border-border bg-card p-5">
-					<p class="mb-1 text-xs font-bold tracking-[0.16em] text-secondary">LEXOSA</p>
+					<p class="mb-1 text-xs font-bold tracking-[0.16em] text-secondary">AGENT</p>
 					<p class="text-sm text-muted-foreground">
 						Nothing here yet. Ask for something and it becomes the first run.
 					</p>
@@ -526,7 +526,7 @@
 				name="body"
 				rows={1}
 				autocomplete="off"
-				placeholder="Tell Lexosa to do something…"
+				placeholder="Tell Agent to do something…"
 				aria-label="Message"
 				class="composer-field"
 				oninput={resizeComposer}

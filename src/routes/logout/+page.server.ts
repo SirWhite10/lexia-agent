@@ -10,7 +10,7 @@ export const load: PageServerLoad = () => {
 
 export const actions: Actions = {
 	default: ({ cookies }) => {
-		cookies.delete('lexia_session', { path: '/' });
+		cookies.delete('agent_session', { path: '/' });
 		redirect(303, '/login');
 	},
 };

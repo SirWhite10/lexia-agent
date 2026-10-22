@@ -8,8 +8,8 @@ import { PROVIDERS } from '../src/lib/server/provider-registry.js';
 // captures the boot environment once, on globalThis. The temp directory must
 // exist before the import, and the boot-environment case has to run in its own
 // process because that capture cannot be repeated.
-const workspace = mkdtempSync(join(tmpdir(), 'lexosa-keys-test-'));
-process.env.LEXIA_STATE_DIR = workspace;
+const workspace = mkdtempSync(join(tmpdir(), 'agent-keys-test-'));
+process.env.AGENT_STATE_DIR = workspace;
 // provider-key.ts captures the boot environment once, so every provider
 // variable has to be absent before it loads — not only the ones this file
 // names. A developer's .env or shell must not decide whether this suite
@@ -76,7 +76,7 @@ describe('provider keys', () => {
 
 	test('a key the host booted with wins over a saved one', async () => {
 		const output = await inChild(
-			{ LEXIA_STATE_DIR: workspace, OPENAI_API_KEY: 'from-the-shell' },
+			{ AGENT_STATE_DIR: workspace, OPENAI_API_KEY: 'from-the-shell' },
 			`const keys = await import(${JSON.stringify(MODULE)});
 			 const changed = keys.saveProviderKey('openai', 'from-the-browser');
 			 console.log(JSON.stringify({

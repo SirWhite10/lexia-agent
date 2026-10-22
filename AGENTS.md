@@ -6,15 +6,15 @@
 
 ---
 
-# Lexosa instructions
+# Agent instructions
 
 @RTK.md
 
 ## Project identity
 
-- Product and agent name: **Lexosa**
-- Repository/project name: **Lexia-Agent** (the GitHub remote is unchanged)
-- Folder name: `Lexosa` (folder on disk; not the product name)
+- Product and agent name: **Agent**
+- Repository/project name: **agent-platform** (the GitHub remote is unchanged)
+- Folder name: `Agent` (folder on disk; not the product name)
 
 ## Operating rules
 
@@ -29,7 +29,7 @@
 - Use Git worktrees for agent coding tasks that need isolation.
 - Never activate an imported agent extension before validation, health check, and explicit acceptance.
 - A plugin is untrusted code, because the agent writes its own plugins. Never grant a capability a manifest does not request, never exceed a declared resource ceiling, and never promote a generation that has not passed validation and health checks.
-- `lexosa-agent/` is data, not source. The host watches it and a change applies on the next event. Never put logic there that needs a rebuild to take effect — that belongs in the host. Create an agent directory with `bun scripts/agent.ts new <name>`, never by hand.
+- `agents/default/` is data, not source. The host watches it and a change applies on the next event. Never put logic there that needs a rebuild to take effect — that belongs in the host. Create an agent directory with `bun scripts/agent.ts new <name>`, never by hand.
 
 ## Dev-only page instrumentation
 
@@ -68,10 +68,10 @@ Read the appropriate router first, then open only the file needed for the task:
 - [PRODUCT.md](./PRODUCT.md): product architecture, runtime boundaries, and major source areas.
 - [CONTENT.md](./CONTENT.md): domain language, product/design documentation, and prompt-facing content.
 - [OPERATIONS.md](./OPERATIONS.md): repository rules, workflows, and operational tooling.
-- [CONTEXT.md](./CONTEXT.md): canonical Lexosa domain glossary.
+- [CONTEXT.md](./CONTEXT.md): canonical Agent domain glossary.
 - [docs/adr/](./docs/adr/): durable architectural decisions and their rationale.
 - [workflow/](./workflow/): repeatable workflows; read the workflow Markdown before its `scripts/` directory.
-- [lexosa-agent/](./lexosa-agent/README.md): the agent data directory — structure and the watch contract.
+- [agents/default/](./agents/default/README.md): the agent data directory — structure and the watch contract.
 - [templates/agent/](./templates/README.md): the agent directory template; `scripts/agent.ts` creates one from it.
 
 When a router is insufficient, update the router as part of the same change.

@@ -338,7 +338,7 @@ mod tests {
     }
 
     fn store() -> (tempdir::TempDir, Registry) {
-        let dir = tempdir::TempDir::new("lexosa-store");
+        let dir = tempdir::TempDir::new("agent-store");
         let registry = Registry::open(dir.path().join("plugins")).expect("registry");
         (dir, registry)
     }

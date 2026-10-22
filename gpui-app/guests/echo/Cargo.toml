@@ -3,7 +3,7 @@
 # linear memory, with no shared types and no imports beyond the ones it was
 # granted.
 [package]
-name = "lexosa-plugin-echo"
+name = "agent-plugin-echo"
 version = "0.1.0"
 edition = "2021"
 publish = false

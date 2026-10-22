@@ -10,8 +10,8 @@
 
 [agent]
 # `name` is the identity used in the run ledger and in action attribution.
-name = "lexosa"
-title = "Lexosa"
+name = "agent"
+title = "Agent"
 description = "The main agent. One massive conversation that grows for the life of the installation."
 
 [prompt]

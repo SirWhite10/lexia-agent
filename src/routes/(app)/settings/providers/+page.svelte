@@ -17,8 +17,8 @@
 </script>
 
 <svelte:head>
-	<title>Providers — Lexosa</title>
-	<meta name="description" content="Credentials for the model providers Lexosa can call." />
+	<title>Providers — Agent</title>
+	<meta name="description" content="Credentials for the model providers Agent can call." />
 </svelte:head>
 
 <section class="mx-auto w-full max-w-2xl flex-1 space-y-4 px-5 py-6" aria-label="Providers">
@@ -103,7 +103,7 @@
 	{/each}
 
 	<p class="rounded-md border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
-		These credentials configure which provider and model Lexosa would use. Nothing calls the
+		These credentials configure which provider and model Agent would use. Nothing calls the
 		speech, image or video APIs yet, and a model chosen here does not change what EVE runs
 		until the router consumes it.
 	</p>

@@ -6,11 +6,11 @@ import { Database } from 'bun:sqlite';
 // state directory rather than in SQLite: transcripts are derived from them
 // later, so the original recording has to survive being large and the database
 // stays a projection the chat can query cheaply.
-const stateDir = resolve(process.env.LEXIA_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
+const stateDir = resolve(process.env.AGENT_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
 const attachmentDir = join(stateDir, 'attachments');
 mkdirSync(attachmentDir, { recursive: true });
 
-const database = new Database(join(stateDir, 'lexia.sqlite'));
+const database = new Database(join(stateDir, 'agent.sqlite'));
 database.run(`
 	CREATE TABLE IF NOT EXISTS attachments (
 		id TEXT PRIMARY KEY,

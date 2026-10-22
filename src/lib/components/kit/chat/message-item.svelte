@@ -49,19 +49,19 @@
 	data-kit="message-item"
 	data-author={message.authorKind}
 	class={cn('group relative w-full min-w-0', className)}
-	aria-label="{message.authorKind === 'user' ? 'You' : 'Lexia'} said"
+	aria-label="{message.authorKind === 'user' ? 'You' : 'Agent'} said"
 >
 	<Message {alignment} ghostContent={message.streaming === true}>
 		{#snippet avatar()}
 			{#if isUser}
 				<Avatar name="You" size="md" />
 			{:else}
-				<Avatar name="Lexia" size="md" />
+				<Avatar name="Agent" size="md" />
 			{/if}
 		{/snippet}
 
 		{#snippet header()}
-			<span class="font-medium text-[color:var(--kit-foreground)]">{isUser ? 'You' : 'Lexia'}</span>
+			<span class="font-medium text-[color:var(--kit-foreground)]">{isUser ? 'You' : 'Agent'}</span>
 			{#if hydrated}<span aria-hidden="true">·</span><span>{relativeTime(message.createdAt, Date.now())}</span>{/if}
 			{#if message.runId}
 				<span aria-hidden="true">·</span>

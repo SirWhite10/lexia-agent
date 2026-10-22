@@ -9,7 +9,7 @@
  *   - motion:    gpui-component-0.7.0/src/theme/motion.rs (MotionTokens::default)
  *
  * Scope rule: the tokens live on `.kit` and nowhere else, so this page can
- * preview GPUI Kit's real visual language without touching the Lexia design
+ * preview GPUI Kit's real visual language without touching the Agent design
  * tokens in src/routes/layout.css. Components read them with the Tailwind
  * arbitrary-value shorthand, e.g. `bg-(--kit-background)`.
  *

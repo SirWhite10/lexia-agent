@@ -11,7 +11,7 @@ import type { Action } from './runs.js';
 // them, so the slice proves the execution contract without coupling to a
 // provider. Every builtin is a real local side effect, not a stub: `note.write`
 // appends a file under the state directory, and `chat.ack` records a reply.
-const stateDir = resolve(process.env.LEXIA_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
+const stateDir = resolve(process.env.AGENT_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
 const notesDir = join(stateDir, 'agent/notes');
 
 export type BuiltinContext = { action: Action; input: string | null };
@@ -72,7 +72,7 @@ const BUILTINS: Record<string, Builtin> = {
 				].join('\n\n')
 			);
 			if (!report.failed && report.reply) {
-				appendMessage({ authorKind: 'lexia', runId: action.runId, body: report.reply });
+				appendMessage({ authorKind: 'agent', runId: action.runId, body: report.reply });
 			}
 
 			return { progress: ['delegated', 'working', 'reported back'], result: `${subAgent.name}: ${finding.reply}` };

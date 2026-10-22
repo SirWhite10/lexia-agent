@@ -1,13 +1,13 @@
 # The agent data directory
 
-`lexosa-agent/` is the default agent's directory. Everything the agent knows lives here as data — nothing in it is compiled into the host, and changing it changes agent behaviour without a rebuild. That separation is the point: the host is permanent, this tree is not.
+`agents/default/` is the default agent's directory. Everything the agent knows lives here as data — nothing in it is compiled into the host, and changing it changes agent behaviour without a rebuild. That separation is the point: the host is permanent, this tree is not.
 
-Per [ADR 0005](../docs/adr/0005-rust-agent-host-and-wasm-plugins.md), this replaces `my-agent/`, which was the EVE project. The structure is different on purpose — EVE's was a package with a runtime inside it; this is a data tree read by a binary that does not change.
+Per [ADR 0005](../../docs/adr/0005-rust-agent-host-and-wasm-plugins.md), this replaces `my-agent/`, which was the EVE project. The structure is different on purpose — EVE's was a package with a runtime inside it; this is a data tree read by a binary that does not change.
 
 ## Structure
 
 ```text
-lexosa-agent/
+agents/default/
 ├── agent.toml      the manifest: everything that stays a single record
 ├── instructions/   system-prompt fragments, composed into the agent's prompt
 ├── memory/facts/   one file per durable fact; the vector index is host-owned
@@ -51,7 +51,7 @@ Watching a path that only this host writes to produces feedback: the host writes
 Every agent directory has the same shape. A new one is made from the template, not by hand:
 
 ```sh
-bun scripts/agent.ts new <name>          # creates lexosa-agent/subagents/<name>/
+bun scripts/agent.ts new <name>          # creates agents/default/subagents/<name>/
 bun scripts/agent.ts pack                # rebuilds templates/agent.zip from templates/agent/
 bun scripts/agent.ts check <name>        # validates a directory against the manifest schema
 ```

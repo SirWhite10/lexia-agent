@@ -67,7 +67,7 @@ export function planTurn(input: { body: string }): TurnPlan {
 			name: subAgentName(task, body),
 			focus: task,
 			systemPrompt: [
-				`You are ${subAgentName(task, body)}, a sub-agent Lexosa spawned for one job.`,
+				`You are ${subAgentName(task, body)}, a sub-agent Agent spawned for one job.`,
 				'Answer that job and nothing else.',
 				'Report what you found as plain prose, and say plainly what you could not establish.'
 			].join(' '),

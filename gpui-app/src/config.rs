@@ -32,7 +32,7 @@ pub struct AgentConfig {
     #[serde(default)]
     pub sandbox: Sandbox,
     /// Only the main agent carries these. A sub-agent manifest omits them
-    /// entirely and inherits; see `lexosa-agent/README.md`.
+    /// entirely and inherits; see `agents/default/README.md`.
     #[serde(default, rename = "providers")]
     pub providers: Vec<Provider>,
     #[serde(default, rename = "use_cases")]

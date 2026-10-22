@@ -5,9 +5,9 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { Database } from 'bun:sqlite';
 
 // Same state boundary as the other data modules (runs, memory, agents): an
-// explicit LEXIA_STATE_DIR wins, otherwise the default sits under the app root.
-const stateDir = resolve(process.env.LEXIA_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
-const databasePath = join(stateDir, 'lexia.sqlite');
+// explicit AGENT_STATE_DIR wins, otherwise the default sits under the app root.
+const stateDir = resolve(process.env.AGENT_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
+const databasePath = join(stateDir, 'agent.sqlite');
 mkdirSync(stateDir, { recursive: true });
 
 const database = new Database(databasePath);
@@ -74,7 +74,7 @@ export async function authenticate(username: string, password: string): Promise<
 
 /** Reads the server-issued session cookie without exposing auth state to the client. */
 export function getUser(event: Pick<RequestEvent, 'cookies'>): App.Locals['user'] {
-	const session = event.cookies.get('lexia_session');
+	const session = event.cookies.get('agent_session');
 	if (!session) return null;
 
 	const user = database.query('SELECT id, username FROM users WHERE id = ?').get(session) as UserRow | null;

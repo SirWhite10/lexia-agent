@@ -36,7 +36,7 @@ fn manifest(granted_asked: &[Capability]) -> Manifest {
 fn guest_artifact() -> PathBuf {
     let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("guests/echo");
     let artifact = crate_dir
-        .join("target/wasm32-unknown-unknown/release/lexosa_plugin_echo.wasm");
+        .join("target/wasm32-unknown-unknown/release/agent_plugin_echo.wasm");
     if !artifact.is_file() {
         let status = Command::new("cargo")
             .args(["+nightly-2026-10-04", "build", "--release", "--target", "wasm32-unknown-unknown"])
@@ -85,7 +85,7 @@ fn install_and_promote(host: &PluginHost, asked: &[Capability], artifact: &[u8])
 
 #[test]
 fn a_candidate_cannot_be_used_before_it_is_promoted() {
-    let dir = TempDir::new("lexosa-plugin-candidate");
+    let dir = TempDir::new("agent-plugin-candidate");
     let host = host(&dir);
     let artifact = std::fs::read(guest_artifact()).expect("artifact");
 
@@ -95,7 +95,7 @@ fn a_candidate_cannot_be_used_before_it_is_promoted() {
         "a registered candidate grants nothing"
     );
     assert!(matches!(
-        host.validate("lexosa", "echo"),
+        host.validate("agent", "echo"),
         Err(Error::Plugin(PluginError::NoActiveGeneration { .. }))
     ));
     assert_eq!(number, 1);
@@ -103,35 +103,35 @@ fn a_candidate_cannot_be_used_before_it_is_promoted() {
 
 #[test]
 fn a_promoted_plugin_that_was_never_granted_anything_will_not_load() {
-    let dir = TempDir::new("lexosa-plugin-ungranted");
+    let dir = TempDir::new("agent-plugin-ungranted");
     let host = host(&dir);
     let artifact = std::fs::read(guest_artifact()).expect("artifact");
     install_and_promote(&host, &[Capability::Log], &artifact);
 
-    // The plugin imports `lexosa_host_log`, which is granted. With consent
+    // The plugin imports `agent_host_log`, which is granted. With consent
     // withheld it is not linked, so the module cannot instantiate.
     assert!(
-        matches!(host.validate("lexosa", "echo"), Err(Error::Plugin(PluginError::LoadFailed { .. }))),
+        matches!(host.validate("agent", "echo"), Err(Error::Plugin(PluginError::LoadFailed { .. }))),
         "an ungranted import means the plugin cannot instantiate at all"
     );
-    assert!(host.effective("lexosa", "echo").expect("effective").is_empty());
+    assert!(host.effective("agent", "echo").expect("effective").is_empty());
 }
 
 #[test]
 fn a_granted_plugin_loads_and_answers() {
-    let dir = TempDir::new("lexosa-plugin-load");
+    let dir = TempDir::new("agent-plugin-load");
     let host = host(&dir);
     let artifact = std::fs::read(guest_artifact()).expect("artifact");
     install_and_promote(&host, &[Capability::Log], &artifact);
 
-    host.grant("lexosa", "echo", Capability::Log).expect("grant");
+    host.grant("agent", "echo", Capability::Log).expect("grant");
 
-    let loaded = host.validate("lexosa", "echo").expect("validates");
+    let loaded = host.validate("agent", "echo").expect("validates");
     assert_eq!(loaded.generation, 1);
     assert_eq!(loaded.granted, vec![Capability::Log]);
 
     let response = host
-        .execute("lexosa", "echo", "hello from the host")
+        .execute("agent", "echo", "hello from the host")
         .expect("executes");
     assert!(
         response.contains("hello from the host"),
@@ -145,35 +145,35 @@ fn a_granted_plugin_loads_and_answers() {
 
 #[test]
 fn revocation_stops_the_call_immediately() {
-    let dir = TempDir::new("lexosa-plugin-revoke");
+    let dir = TempDir::new("agent-plugin-revoke");
     let host = host(&dir);
     let artifact = std::fs::read(guest_artifact()).expect("artifact");
     install_and_promote(&host, &[Capability::Log], &artifact);
-    host.grant("lexosa", "echo", Capability::Log).expect("grant");
+    host.grant("agent", "echo", Capability::Log).expect("grant");
 
-    host.execute("lexosa", "echo", "before").expect("works while granted");
+    host.execute("agent", "echo", "before").expect("works while granted");
 
-    let revoked = host.revoke("lexosa", "echo");
+    let revoked = host.revoke("agent", "echo");
     assert_eq!(revoked, vec![Capability::Log]);
     assert!(
-        host.execute("lexosa", "echo", "after").is_err(),
+        host.execute("agent", "echo", "after").is_err(),
         "a revoked grant stops the next call, not the next restart"
     );
     assert!(
-        host.execute("lexosa", "echo", "after").is_err(),
+        host.execute("agent", "echo", "after").is_err(),
         "and stays stopped"
     );
 }
 
 #[test]
 fn a_grant_does_not_carry_to_another_agent() {
-    let dir = TempDir::new("lexosa-plugin-agents");
+    let dir = TempDir::new("agent-plugin-agents");
     let host = host(&dir);
     let artifact = std::fs::read(guest_artifact()).expect("artifact");
     install_and_promote(&host, &[Capability::Log], &artifact);
 
-    host.grant("lexosa", "echo", Capability::Log).expect("grant");
-    assert!(host.execute("lexosa", "echo", "hi").is_ok());
+    host.grant("agent", "echo", Capability::Log).expect("grant");
+    assert!(host.execute("agent", "echo", "hi").is_ok());
 
     assert!(
         host.execute("code-reviewer", "echo", "hi").is_err(),
@@ -183,7 +183,7 @@ fn a_grant_does_not_carry_to_another_agent() {
 
 #[test]
 fn a_capability_the_host_cannot_serve_cannot_be_granted() {
-    let dir = TempDir::new("lexosa-plugin-unserved");
+    let dir = TempDir::new("agent-plugin-unserved");
     let host = host(&dir);
     let artifact = std::fs::read(guest_artifact()).expect("artifact");
     install_and_promote(&host, &[Capability::MemoryRead], &artifact);
@@ -191,38 +191,38 @@ fn a_capability_the_host_cannot_serve_cannot_be_granted() {
     // The memory layer does not exist yet, so this capability is refused where a
     // person can see it, rather than granted and failing at the call.
     assert!(matches!(
-        host.grant("lexosa", "echo", Capability::MemoryRead),
+        host.grant("agent", "echo", Capability::MemoryRead),
         Err(Error::Plugin(PluginError::NotGrantable(_)))
     ));
 }
 
 #[test]
 fn granting_something_the_plugin_never_asked_for_is_refused() {
-    let dir = TempDir::new("lexosa-plugin-unasked");
+    let dir = TempDir::new("agent-plugin-unasked");
     let host = host(&dir);
     let artifact = std::fs::read(guest_artifact()).expect("artifact");
     install_and_promote(&host, &[Capability::Log], &artifact);
 
     let error = host
-        .grant("lexosa", "echo", Capability::Shell)
+        .grant("agent", "echo", Capability::Shell)
         .expect_err("a grant for an unrequested capability is refused");
     assert!(error.to_string().contains("does not request"));
     assert!(
-        !host.effective("lexosa", "echo").unwrap().contains(&Capability::Shell),
+        !host.effective("agent", "echo").unwrap().contains(&Capability::Shell),
         "and it grants nothing"
     );
 }
 
 #[test]
 fn a_failed_candidate_leaves_the_active_generation_running() {
-    let dir = TempDir::new("lexosa-plugin-rollback");
+    let dir = TempDir::new("agent-plugin-rollback");
     let host = host(&dir);
     let good = std::fs::read(guest_artifact()).expect("artifact");
 
     let first = host.registry().install(&manifest(&[Capability::Log]), &good).expect("v1");
     host.registry().promote("echo", first).expect("promote v1");
-    host.grant("lexosa", "echo", Capability::Log).expect("grant");
-    host.execute("lexosa", "echo", "v1 works").expect("v1 runs");
+    host.grant("agent", "echo", Capability::Log).expect("grant");
+    host.execute("agent", "echo", "v1 works").expect("v1 runs");
 
     // A candidate that is not a module at all.
     let broken = host
@@ -234,7 +234,7 @@ fn a_failed_candidate_leaves_the_active_generation_running() {
         "promotion is a pointer move; it does not load"
     );
     assert!(
-        host.execute("lexosa", "echo", "after a bad build").is_err(),
+        host.execute("agent", "echo", "after a bad build").is_err(),
         "and the broken generation fails loudly"
     );
 
@@ -242,23 +242,23 @@ fn a_failed_candidate_leaves_the_active_generation_running() {
     assert_eq!(back.number, first);
     assert_eq!(host.registry().active("echo").unwrap().unwrap().number, first);
     assert!(
-        host.execute("lexosa", "echo", "restored").is_ok(),
+        host.execute("agent", "echo", "restored").is_ok(),
         "rollback needs no rebuild, because the bytes were never mutated"
     );
 }
 
 #[test]
 fn declaring_an_import_the_plugin_never_requested_is_an_error() {
-    let dir = TempDir::new("lexosa-plugin-bare");
+    let dir = TempDir::new("agent-plugin-bare");
     let host = host(&dir);
     let artifact = std::fs::read(guest_artifact()).expect("artifact");
     // The manifest asks for nothing, yet the guest still declares
-    // `lexosa_host_log`. Because no capability was granted, no such import was
+    // `agent_host_log`. Because no capability was granted, no such import was
     // linked, so instantiation fails. Declaring an import you were not granted
     // is an error rather than a silent no-op.
     install_and_promote(&host, &[], &artifact);
     assert!(matches!(
-        host.validate("lexosa", "echo"),
+        host.validate("agent", "echo"),
         Err(Error::Plugin(PluginError::LoadFailed { .. }))
     ));
 }

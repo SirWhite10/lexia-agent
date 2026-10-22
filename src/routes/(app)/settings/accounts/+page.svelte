@@ -7,13 +7,13 @@
 </script>
 
 <svelte:head>
-	<title>Accounts — Lexosa</title>
-	<meta name="description" content="This device is signed in to the local Lexosa workspace." />
+	<title>Accounts — Agent</title>
+	<meta name="description" content="This device is signed in to the local Agent workspace." />
 </svelte:head>
 
 <section class="mx-auto w-full max-w-2xl flex-1 space-y-4 px-5 py-6" aria-label="Accounts">
 	<p class="mb-5 text-sm text-muted-foreground">
-		This device is signed in to the local Lexosa workspace.
+		This device is signed in to the local Agent workspace.
 	</p>
 
 	<Card.Root>

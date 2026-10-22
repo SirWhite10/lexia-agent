@@ -11,7 +11,7 @@
 //! artifact small. The host builds a fresh store per call, so nothing is
 //! reclaimed within an instantiation.
 //!
-//! It imports exactly one host function, `lexosa_host_log`, because the manifest
+//! It imports exactly one host function, `agent_host_log`, because the manifest
 //! requests `log` and nothing else. An import for an unrequested capability is
 //! not linked, so calling one would fail to *instantiate* — the sandbox is the
 //! absence of the import, not a check inside it.
@@ -66,14 +66,14 @@ fn panic(_info: &core::panic::PanicInfo<'_>) -> ! {
 /// The ABI version the host expects. A mismatch is refused at load rather than
 /// discovered mid-call.
 #[unsafe(no_mangle)]
-pub extern "C" fn lexosa_abi_version() -> i32 {
+pub extern "C" fn agent_abi_version() -> i32 {
     1
 }
 
 /// Allocate for the host to write into. The host writes `len` bytes here
 /// immediately afterwards, so the memory must already cover them.
 #[unsafe(no_mangle)]
-pub extern "C" fn lexosa_alloc(len: i32) -> i32 {
+pub extern "C" fn agent_alloc(len: i32) -> i32 {
     let len = len.max(0) as usize;
     let layout = Layout::from_size_align(len.max(1), 1).expect("a non-zero layout");
     unsafe { ALLOCATOR.alloc(layout) as i32 }
@@ -87,7 +87,7 @@ pub extern "C" fn lexosa_alloc(len: i32) -> i32 {
 /// The host guarantees `req`/`req_len` are readable and `out`/`out_cap` are a
 /// writable range in this memory.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn lexosa_execute(
+pub unsafe extern "C" fn agent_execute(
     req: i32,
     req_len: i32,
     out: i32,
@@ -118,15 +118,15 @@ pub unsafe extern "C" fn lexosa_execute(
 
 // Granted by the host because the manifest asked for `log` and only `log`.
 extern "C" {
-    fn lexosa_host_log(ptr: i32, len: i32) -> i32;
+    fn agent_host_log(ptr: i32, len: i32) -> i32;
 }
 
 fn log(message: &str) {
     unsafe {
         let len = message.len() as i32;
-        let ptr = lexosa_alloc(len);
+        let ptr = agent_alloc(len);
         core::ptr::copy_nonoverlapping(message.as_ptr(), ptr as *mut u8, len as usize);
-        lexosa_host_log(ptr, len);
+        agent_host_log(ptr, len);
     }
 }
 

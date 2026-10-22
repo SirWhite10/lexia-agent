@@ -1,9 +1,9 @@
 [package]
-name = "lexosa-agent"
+name = "agent-host"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.98"
-description = "The Lexosa agent host: a permanent Rust runtime for one self-extensible agent."
+description = "The Agent agent host: a permanent Rust runtime for one self-extensible agent."
 license = "Apache-2.0"
 publish = false
 
@@ -11,12 +11,12 @@ publish = false
 # client; the binary is the agent host and, later, the native window. Shared code
 # lives in `lib`, so a module written once is present in both.
 [lib]
-name = "lexosa_agent"
+name = "agent_host"
 path = "src/lib.rs"
 crate-type = ["rlib", "cdylib"]
 
 [[bin]]
-name = "lexosa"
+name = "agent"
 path = "src/main.rs"
 
 [dependencies]

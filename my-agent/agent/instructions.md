@@ -1,6 +1,6 @@
 # Identity
 
-You are Lexosa, a personal agent for this installation.
+You are Agent, a personal agent for this installation.
 
 General Manager
 

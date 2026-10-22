@@ -18,13 +18,13 @@
 //! no second call to learn its size.
 //!
 //! ```text
-//! export fn lexosa_abi_version() -> i32                     must return ABI_VERSION
-//! export fn lexosa_alloc(len: i32) -> i32                   host allocates a guest buffer
-//! export fn lexosa_execute(req: i32, req_len: i32, out: i32, out_cap: i32) -> i32
+//! export fn agent_abi_version() -> i32                     must return ABI_VERSION
+//! export fn agent_alloc(len: i32) -> i32                   host allocates a guest buffer
+//! export fn agent_execute(req: i32, req_len: i32, out: i32, out_cap: i32) -> i32
 //! export memory
 //! ```
 //!
-//! Both buffers are allocated by the host through `lexosa_alloc`. An earlier
+//! Both buffers are allocated by the host through `agent_alloc`. An earlier
 //! shape had the guest return a packed `(ptr, len)` it had allocated itself,
 //! which put the response buffer at the mercy of the guest's allocator: a
 //! guest that misallocates returns a pointer the host then reads garbage from.
@@ -207,10 +207,10 @@ impl PluginHost {
     pub fn validate(&self, agent: &str, plugin: &str) -> Result<LoadedPlugin> {
         let (mut store, instance) = self.prepare(agent, plugin)?;
         let version = instance
-            .get_typed_func::<(), i32>(&mut store, "lexosa_abi_version")
+            .get_typed_func::<(), i32>(&mut store, "agent_abi_version")
             .map_err(|e| PluginError::LoadFailed {
                 plugin: plugin.to_string(),
-                reason: format!("no `lexosa_abi_version` export: {e}"),
+                reason: format!("no `agent_abi_version` export: {e}"),
             })?;
         let found = version
             .call(&mut store, ())
@@ -241,16 +241,16 @@ impl PluginHost {
         let (mut store, instance) = self.prepare(agent, plugin)?;
 
         let alloc = instance
-            .get_typed_func::<i32, i32>(&mut store, "lexosa_alloc")
+            .get_typed_func::<i32, i32>(&mut store, "agent_alloc")
             .map_err(|e| PluginError::LoadFailed {
                 plugin: plugin.to_string(),
-                reason: format!("no `lexosa_alloc` export: {e}"),
+                reason: format!("no `agent_alloc` export: {e}"),
             })?;
         let execute = instance
-            .get_typed_func::<(i32, i32, i32, i32), i32>(&mut store, "lexosa_execute")
+            .get_typed_func::<(i32, i32, i32, i32), i32>(&mut store, "agent_execute")
             .map_err(|e| PluginError::LoadFailed {
                 plugin: plugin.to_string(),
-                reason: format!("no `lexosa_execute` export: {e}"),
+                reason: format!("no `agent_execute` export: {e}"),
             })?;
 
         let memory = store

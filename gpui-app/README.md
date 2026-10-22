@@ -1,4 +1,4 @@
-# `lexosa` — the agent host
+# `agent` — the agent host
 
 One crate, two distributions. The `cdylib` is the browser client; the binary is the agent host and, later, the native window. Shared code lives in `lib`, so a module written once is present in both.
 
@@ -13,7 +13,7 @@ cargo run -- providers       # providers and which credential is in force
 cargo run -- serve           # the HTTP surface, on 127.0.0.1:8787
 ```
 
-From the repository root, so `lexosa-agent/agent.toml` resolves. Override with `--agent-dir`, `--state-dir`, or `LEXOSA_AGENT_DIR` / `LEXOSA_STATE_DIR`.
+From the repository root, so `agents/default/agent.toml` resolves. Override with `--agent-dir`, `--state-dir`, or `AGENT_AGENT_DIR` / `AGENT_STATE_DIR`.
 
 ```sh
 cargo test
@@ -48,7 +48,7 @@ Each layer knows only the ones below it. `models` knows nothing about HTTP, and 
 
 ## Three decisions worth knowing about
 
-**The state directory is separate from the old one.** It defaults to `app-data/state/agent-host`, not `app-data/state`. The TypeScript host still runs and still owns `lexia.sqlite` until WF-IMP-025 removes it. Pointing both at one directory would put two implementations in a position to write the same file — the failure this whole migration is arranged to avoid.
+**The state directory is separate from the old one.** It defaults to `app-data/state/agent-host`, not `app-data/state`. The TypeScript host still runs and still owns `agent.sqlite` until WF-IMP-025 removes it. Pointing both at one directory would put two implementations in a position to write the same file — the failure this whole migration is arranged to avoid.
 
 **An environment credential outranks a stored one, and that is visible.** `<PROVIDER>_API_KEY` beats `<state>/credentials/<provider>.key` for the life of the process, so a shell configuration is never silently overridden from a browser. The settings surface can therefore say *which* credential is in force, and reports the shadow rather than showing a masked file that is not in use. Removing a stored key does not remove an environment one, and the API says so.
 
@@ -57,8 +57,8 @@ Each layer knows only the ones below it. `models` knows nothing about HTTP, and 
 ## Plugins
 
 ```
-./target/debug/lexosa plugins list
-./target/debug/lexosa plugins granted <agent> <plugin>
+./target/debug/agent plugins list
+./target/debug/agent plugins granted <agent> <plugin>
 ```
 
 Build the bundled guest — the tests do this for you if it is missing:
@@ -68,7 +68,7 @@ cd guests/echo && cargo +nightly-2026-10-04 build --release --target wasm32-unkn
 ```
 
 **The ABI is a boundary, not a Rust interface.** Strings cross as UTF-8 in linear
-memory; both buffers are allocated by the host through `lexosa_alloc`. An earlier
+memory; both buffers are allocated by the host through `agent_alloc`. An earlier
 shape had the guest return a pointer it had allocated itself, which put the
 response at the mercy of the guest's allocator — a misallocating guest could
 make the host read a wild address. Now a guest bug can produce a wrong answer
@@ -90,7 +90,7 @@ Model; a component toolchain does not build on this host. See ADR 0005.
 
 **Startup recovery now actually runs.** `recoverExpiredLeases` was exported and tested in the TypeScript but never called by anything. ADR 0002 called for it and it was never wired. The host calls it before the listener binds, and warns when anything needed reconciling.
 
-**The two stores do not overlap.** The run store is `<state>/runs.sqlite`, beside the credential directory and deliberately *not* the old `app-data/state/lexia.sqlite`, which the TypeScript host still owns. Migrating is part of the cutover; until then there is one writer each.
+**The two stores do not overlap.** The run store is `<state>/runs.sqlite`, beside the credential directory and deliberately *not* the old `app-data/state/agent.sqlite`, which the TypeScript host still owns. Migrating is part of the cutover; until then there is one writer each.
 
 ## What is deliberately absent
 

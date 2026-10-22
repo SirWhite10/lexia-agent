@@ -504,7 +504,7 @@ export function seededConversation(now: number): ChatMessage[] {
 		},
 		{
 			id: 'm2',
-			authorKind: 'lexia',
+			authorKind: 'agent',
 			body: "Not yet. The app is SvelteKit; GPUI is Rust, so nothing in this repo renders GPUI directly. This page ports the component layer and the default theme so the look is judged on the device you actually hold.",
 			createdAt: now - 8 * minute,
 			artifacts: [seededArtifacts.docsLink]
@@ -517,7 +517,7 @@ export function seededConversation(now: number): ChatMessage[] {
 		},
 		{
 			id: 'm4',
-			authorKind: 'lexia',
+			authorKind: 'agent',
 			body: 'Here is the shape of that run, and every artifact shape the agent can emit. The fan-out is the parent run plus the sub-agents it spawned; the artifacts render inline under the message that produced them.',
 			createdAt: now - 4 * minute,
 			runId: 'run_7fq2',

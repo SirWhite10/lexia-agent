@@ -1,5 +1,5 @@
 /**
- * Every outside service Lexosa can be configured to call, and what each one is
+ * Every outside service Agent can be configured to call, and what each one is
  * good for. This is the single source of truth: the Providers page renders from
  * it, the key store files credentials by its ids, and the model picker offers
  * only providers that serve the modality of the row being assigned.
@@ -137,7 +137,7 @@ export function providersFor(modality: Modality): Provider[] {
 const DEFAULT_LOCAL_BASE_URL = 'http://127.0.0.1:8080';
 
 /** Where a self-hosted provider is reached. Read from the environment on every
- * call rather than captured at boot, so pointing Lexosa at another box is a
+ * call rather than captured at boot, so pointing Agent at another box is a
  * restart away and not a code change. */
 export function providerBaseUrl(provider: Provider): string | null {
 	if (!provider.baseUrlEnv) return null;

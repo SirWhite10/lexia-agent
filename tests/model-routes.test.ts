@@ -6,8 +6,8 @@ import { Database } from 'bun:sqlite';
 
 // model-routes.ts resolves its database when the module loads, so the temp
 // directory has to exist before the import.
-const workspace = mkdtempSync(join(tmpdir(), 'lexosa-routes-test-'));
-process.env.LEXIA_STATE_DIR = workspace;
+const workspace = mkdtempSync(join(tmpdir(), 'agent-routes-test-'));
+process.env.AGENT_STATE_DIR = workspace;
 const routes = await import('../src/lib/server/model-routes.js');
 
 const MODULE = new URL('../src/lib/server/model-routes.ts', import.meta.url).pathname;
@@ -20,7 +20,7 @@ afterAll(() => {
 // back rather than deleting them: clearing the table would leave the next test
 // with a workspace that has no use-cases at all.
 beforeEach(() => {
-	const db = new Database(join(workspace, 'lexia.sqlite'));
+	const db = new Database(join(workspace, 'agent.sqlite'));
 	db.run('DELETE FROM model_assignments WHERE builtin = 0');
 	db.run("UPDATE model_assignments SET model_id = '', provider_id = '' WHERE builtin = 1");
 	db.close();
@@ -107,8 +107,8 @@ describe('custom use-cases', () => {
 
 describe('migration', () => {
 	test('adds modality and provider_id to a table that predates them', async () => {
-		const legacy = mkdtempSync(join(tmpdir(), 'lexosa-legacy-test-'));
-		const db = new Database(join(legacy, 'lexia.sqlite'));
+		const legacy = mkdtempSync(join(tmpdir(), 'agent-legacy-test-'));
+		const db = new Database(join(legacy, 'agent.sqlite'));
 		db.run(`CREATE TABLE model_assignments (
 			use_case TEXT PRIMARY KEY, label TEXT NOT NULL, model_id TEXT NOT NULL,
 			builtin INTEGER NOT NULL, created_at TEXT NOT NULL
@@ -128,7 +128,7 @@ describe('migration', () => {
 					 count: rows.length
 				 }));`
 			],
-			{ env: { ...process.env, LEXIA_STATE_DIR: legacy }, stdout: 'pipe', stderr: 'pipe' }
+			{ env: { ...process.env, AGENT_STATE_DIR: legacy }, stdout: 'pipe', stderr: 'pipe' }
 		);
 		const output = (await new Response(child.stdout).text()).trim();
 		if ((await child.exited) !== 0) {

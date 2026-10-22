@@ -414,7 +414,7 @@ fn replaying_the_whole_log_reconstructs_the_same_state() {
 
     // A second coordinator over the same file sees what the first committed.
     // The event log is the history; the rows are a projection of it.
-    let path = std::env::temp_dir().join(format!("lexosa-replay-{}", uuid::Uuid::new_v4()));
+    let path = std::env::temp_dir().join(format!("agent-replay-{}", uuid::Uuid::new_v4()));
     let file = Coordinator::open(&path.join("runs.sqlite")).unwrap();
     let (run2, first2) = plan(&file, "full replay", "first");
     let second2 = file
@@ -498,7 +498,7 @@ fn an_empty_run_projects_as_succeeded_once_committed() {
 
 #[test]
 fn state_survives_reopening_the_file() {
-    let path = std::env::temp_dir().join(format!("lexosa-durable-{}", uuid::Uuid::new_v4()));
+    let path = std::env::temp_dir().join(format!("agent-durable-{}", uuid::Uuid::new_v4()));
     let db = path.join("runs.sqlite");
 
     let (run, action) = {

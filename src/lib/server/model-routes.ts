@@ -11,8 +11,8 @@ import { MODALITY_ORDER, providerById, type Modality } from './provider-registry
 // Every assignment ships unchosen (model_id = ''). The operator picks the model
 // per use-case; seeding invented defaults would silently route work to a model
 // nobody chose and cost real provider credits.
-const stateDir = resolve(process.env.LEXIA_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
-const databasePath = join(stateDir, 'lexia.sqlite');
+const stateDir = resolve(process.env.AGENT_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
+const databasePath = join(stateDir, 'agent.sqlite');
 mkdirSync(dirname(databasePath), { recursive: true });
 
 const database = new Database(databasePath);

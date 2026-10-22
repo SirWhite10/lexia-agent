@@ -77,14 +77,14 @@ impl Capability {
     /// with no effect would read as a grant that works.
     pub fn host_import(self) -> &'static str {
         match self {
-            Capability::Log => "lexosa_host_log",
-            Capability::HttpGet => "lexosa_host_http_get",
-            Capability::HttpPost => "lexosa_host_http_post",
-            Capability::FilesystemRead => "lexosa_host_fs_read",
-            Capability::FilesystemWrite => "lexosa_host_fs_write",
-            Capability::Shell => "lexosa_host_shell",
-            Capability::MemoryRead => "lexosa_host_memory_search",
-            Capability::MemoryWrite => "lexosa_host_memory_write",
+            Capability::Log => "agent_host_log",
+            Capability::HttpGet => "agent_host_http_get",
+            Capability::HttpPost => "agent_host_http_post",
+            Capability::FilesystemRead => "agent_host_fs_read",
+            Capability::FilesystemWrite => "agent_host_fs_write",
+            Capability::Shell => "agent_host_shell",
+            Capability::MemoryRead => "agent_host_memory_search",
+            Capability::MemoryWrite => "agent_host_memory_write",
         }
     }
 

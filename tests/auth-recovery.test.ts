@@ -5,14 +5,14 @@ import { join } from 'node:path';
 import { Database } from 'bun:sqlite';
 
 // The recovery table lives in the same state boundary as the rest of the host,
-// so pointing LEXIA_STATE_DIR at a temp directory keeps tokens out of the real
+// so pointing AGENT_STATE_DIR at a temp directory keeps tokens out of the real
 // installation. Dynamic import exception: the env var must be set before the
 // module reads it at load.
-const workspace = mkdtempSync(join(tmpdir(), 'lexosa-auth-test-'));
-process.env.LEXIA_STATE_DIR = workspace;
+const workspace = mkdtempSync(join(tmpdir(), 'agent-auth-test-'));
+process.env.AGENT_STATE_DIR = workspace;
 const auth = await import('../src/lib/server/auth.js');
 
-const databaseFile = join(workspace, 'lexia.sqlite');
+const databaseFile = join(workspace, 'agent.sqlite');
 const recoveryFile = join(workspace, 'auth-recovery.txt');
 const password = 'correct-horse-battery';
 const replacement = 'a-brand-new-password';

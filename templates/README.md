@@ -11,7 +11,7 @@ The zip is committed too because a packed artifact is what you want at the point
 The two are kept identical by `check`:
 
 ```sh
-bun scripts/agent.ts check lexosa-agent     # structure parity, no unsubstituted tokens
+bun scripts/agent.ts check agents/default     # structure parity, no unsubstituted tokens
 ```
 
 That is why the default agent lives in the repository rather than only being generated: running `check` against it is what proves the template and a real instance have not drifted apart.
@@ -41,7 +41,7 @@ Tokens live only in `agent.toml` and `instructions/core.md`. Everything else in 
 ## Usage
 
 ```sh
-bun scripts/agent.ts new <name>                        # lexosa-agent/subagents/<name>/
+bun scripts/agent.ts new <name>                        # agents/default/subagents/<name>/
 bun scripts/agent.ts new <name> --parent <dir>        # anywhere else
 bun scripts/agent.ts check <dir>                       # validate
 ```

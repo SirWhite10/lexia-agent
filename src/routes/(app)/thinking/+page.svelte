@@ -102,8 +102,8 @@
 </script>
 
 <svelte:head>
-	<title>Thinking — Lexosa</title>
-	<meta name="description" content="The thought tree Lexosa routes with." />
+	<title>Thinking — Agent</title>
+	<meta name="description" content="The thought tree Agent routes with." />
 </svelte:head>
 
 <section class="mx-auto flex w-full max-w-none flex-1 flex-col gap-4 px-5 py-6 lg:flex-row" aria-label="Thinking">
@@ -112,7 +112,7 @@
 			<div class="min-w-0">
 				<h1 class="text-lg font-bold">Thought tree</h1>
 				<p class="text-sm text-muted-foreground">
-					How Lexosa reads a request: each node is a question it asks itself, and the
+					How Agent reads a request: each node is a question it asks itself, and the
 					answers open the branch below. Drag to arrange, click to edit.
 				</p>
 			</div>

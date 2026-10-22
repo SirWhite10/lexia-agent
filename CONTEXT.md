@@ -1,19 +1,19 @@
-# Lexosa Context
+# Agent Context
 
-This glossary defines the product-specific language used by Lexosa and its agents. Use these terms consistently in code, tickets, documentation, and prompts.
+This glossary defines the product-specific language used by Agent and its agents. Use these terms consistently in code, tickets, documentation, and prompts.
 
 ## Product and runtime
 
-**Lexosa**:
+**Agent**:
 The user-facing agent harness and the single main agent the user talks to; it coordinates routing, execution, tools, skills, workflows, sub-agents, and persistent memory.
-_Avoid_: Alexia, Lexia, Lexia-Agent when referring to the product itself.
+_Avoid_: Agent, Agent, agent-platform when referring to the product itself.
 
 **thought tree**:
-The editable graph of questions Lexosa asks itself while routing a request, drawn at `/thinking`. Each node is a question, a route decision, or an action; its answers open the branch below. Edited by the operator, and later by the agent.
+The editable graph of questions Agent asks itself while routing a request, drawn at `/thinking`. Each node is a question, a route decision, or an action; its answers open the branch below. Edited by the operator, and later by the agent.
 _Avoid_: mind map, decision tree, flowchart.
 
 **provider**:
-An outside service Lexosa can be configured to call — OpenRouter, OpenAI, ElevenLabs, Deepgram, Stability AI, Runway. Each has exactly one credential, held in Settings → Providers, and declares the modalities it serves.
+An outside service Agent can be configured to call — OpenRouter, OpenAI, ElevenLabs, Deepgram, Stability AI, Runway. Each has exactly one credential, held in Settings → Providers, and declares the modalities it serves.
 _Avoid_: integration, connector, vendor, channel.
 
 **modality**:
@@ -79,7 +79,7 @@ _Avoid_: hard-coded model name when discussing routing policy.
 ## Conversation and memory
 
 **massive chat**:
-The single continuous conversation between the user and Lexosa on this installation; it grows for the life of the install and is never split into separate chats.
+The single continuous conversation between the user and Agent on this installation; it grows for the life of the install and is never split into separate chats.
 _Avoid_: chat, session, thread when referring to the one conversation.
 
 **command**:
@@ -91,7 +91,7 @@ The compact record of a sub-agent's work shown in the massive chat — progress 
 _Avoid_: transcript, log.
 
 **memory**:
-Lexosa's durable user-specific context carried across turns: the verbatim user-message log plus distilled facts.
+Agent's durable user-specific context carried across turns: the verbatim user-message log plus distilled facts.
 _Avoid_: conversation history, transcript, context window.
 
 **memory fact**:
@@ -99,11 +99,11 @@ A concise durable fact distilled from conversation and stored in memory, version
 _Avoid_: note, raw log, message.
 
 **reflection**:
-The turn-boundary step that distills memory facts and updates Lexosa's personality.
+The turn-boundary step that distills memory facts and updates Agent's personality.
 _Avoid_: summarization, compaction.
 
 **personality**:
-Lexosa's evolving set of timestamped traits, injected as a main block of its system prompt and updated by reflection.
+Agent's evolving set of timestamped traits, injected as a main block of its system prompt and updated by reflection.
 _Avoid_: persona, profile, preferences.
 
 **archive**:
@@ -113,7 +113,7 @@ _Avoid_: delete, remove.
 ## Agent runtime
 
 **agent directory**:
-A directory holding one agent's data — manifest, instructions, memory, skills, sub-agents, plugin pointers, configuration, workspace. Not source: nothing in it is compiled, and a change takes effect on the next watch event without a rebuild. `lexosa-agent/` is the default agent's.
+A directory holding one agent's data — manifest, instructions, memory, skills, sub-agents, plugin pointers, configuration, workspace. Not source: nothing in it is compiled, and a change takes effect on the next watch event without a rebuild. `agents/default/` is the default agent's.
 _Avoid_: agent project, agent source, config file.
 
 **agent manifest**:
@@ -129,11 +129,11 @@ A durable statement distilled from conversation, held as human-editable markdown
 _Avoid_: memory, note, log entry.
 
 **watch contract**:
-Which paths in an agent directory the host observes, and what a change to each one does. Recorded in [lexosa-agent/README.md](lexosa-agent/README.md). Paths the host writes to — `cache/`, `logs/`, `plugins/versions/` — are excluded by construction, because a host that watches its own writes reacts to them.
+Which paths in an agent directory the host observes, and what a change to each one does. Recorded in [agents/default/README.md](agents/default/README.md). Paths the host writes to — `cache/`, `logs/`, `plugins/versions/` — are excluded by construction, because a host that watches its own writes reacts to them.
 _Avoid_: hot reload, file watching.
 
 **agent project** _(retiring)_:
-The EVE source tree the host ran with `eve dev` — `my-agent/` by default, `LEXIA_EVE_ROOT` overrides. Removed by [WF-IMP-025](docs/planning/tickets/WF-IMP-025-retire-eve-and-the-typescript-agent.md) once the agent host answers for it.
+The EVE source tree the host ran with `eve dev` — `my-agent/` by default, `AGENT_EVE_ROOT` overrides. Removed by [WF-IMP-025](docs/planning/tickets/WF-IMP-025-retire-eve-and-the-typescript-agent.md) once the agent host answers for it.
 _Avoid_: release, bundle, production agent, deployed agent.
 
 **agent source** _(retiring)_:
@@ -155,7 +155,7 @@ A user-approved unit of coding, research, or operational work that may run in an
 _Avoid_: background job when user review and promotion are required.
 
 **sub-agent**:
-An agent Lexosa delegates work to — either a standing sub-agent or a one-shot agent task.
+An agent Agent delegates work to — either a standing sub-agent or a one-shot agent task.
 _Avoid_: worker, helper, process.
 
 **standing sub-agent**:
@@ -163,7 +163,7 @@ A sub-agent with a role card and focus that persists across conversations until 
 _Avoid_: sub-process, session.
 
 **role card**:
-A standing sub-agent's identity record: its Lexosa-authored system prompt, focus, memory scope, and capability allowlist.
+A standing sub-agent's identity record: its Agent-authored system prompt, focus, memory scope, and capability allowlist.
 _Avoid_: profile, config.
 
 **focus**:

@@ -28,12 +28,12 @@
 	let progressStep = $derived(visibleStep === 'welcome' ? 0 : visibleStep === 'setup-password' ? 2 : 1);
 	let pageTitle = $derived(
 		visibleStep === 'welcome'
-			? 'Welcome to Lexosa'
+			? 'Welcome to Agent'
 			: visibleStep === 'login'
-				? 'Sign in — Lexosa'
+				? 'Sign in — Agent'
 				: visibleStep === 'reset'
-					? 'Recover your account — Lexosa'
-					: 'Get started — Lexosa',
+					? 'Recover your account — Agent'
+					: 'Get started — Agent',
 	);
 
 	const setUsername = (event: Event) => {
@@ -55,7 +55,7 @@
 
 <svelte:head>
 	<title>{pageTitle}</title>
-	<meta name="description" content="Set up your Lexosa agent workspace" />
+	<meta name="description" content="Set up your Agent agent workspace" />
 </svelte:head>
 
 <svelte:window
@@ -79,7 +79,7 @@
 
 		{#if visibleStep === 'welcome'}
 			<div class="hero-icon" aria-hidden="true">✦</div>
-			<p class="eyebrow">LEXOSA</p>
+			<p class="eyebrow">AGENT</p>
 			<h1 id="onboarding-title">Welcome to your new agent.</h1>
 			<p class="intro">A thoughtful workspace for turning ideas, questions, and plans into momentum.</p>
 			<button class="primary-button" type="button" onclick={start}>Get started <span aria-hidden="true">→</span></button>
@@ -88,7 +88,7 @@
 				<button class="back-button" type="button" onclick={goBack}>← Back</button>
 			{/if}
 			<p class="eyebrow">WELCOME BACK</p>
-			<h1 id="onboarding-title">Sign in to Lexosa.</h1>
+			<h1 id="onboarding-title">Sign in to Agent.</h1>
 			<p class="intro">Pick up where you left off.</p>
 			{#if data.passwordReset}<p class="notice" role="status">Password updated. Sign in with your new password.</p>{/if}
 			{#if form?.error}<p class="error" role="alert">{form.error}</p>{/if}
@@ -105,7 +105,7 @@
 			<button class="back-button" type="button" onclick={goBack}>← Back</button>
 			<p class="eyebrow">STEP 1 OF 2</p>
 			<h1 id="onboarding-title">Name your workspace.</h1>
-			<p class="intro">Choose the username you’ll use to return to Lexosa.</p>
+			<p class="intro">Choose the username you’ll use to return to Agent.</p>
 			<div class="stack">
 				<label>Username <input autocomplete="username" minlength="3" placeholder="your name" value={username || initialUsername} oninput={setUsername} /></label>
 				<button class="primary-button" type="button" onclick={continueSetup}>Continue <span aria-hidden="true">→</span></button>

@@ -1,8 +1,8 @@
-# Lexosa v0.1 — a self-extensible agent on a Rust host
+# Agent v0.1 — a self-extensible agent on a Rust host
 
-Lexosa is an open-source, self-extensible agent: a permanent Rust host, dynamically loaded WebAssembly Components for every capability, provider-independent model access, persistent memory and skills, and a native and browser client built from the same views.
+Agent is an open-source, self-extensible agent: a permanent Rust host, dynamically loaded WebAssembly Components for every capability, provider-independent model access, persistent memory and skills, and a native and browser client built from the same views.
 
-This document says what v0.1 contains. It is scoped to Lexosa's existing feature set — chat with a live run ledger, the thought tree, workflows, sub-agents, settings — rebuilt on the stack in [ADR 0005](../adr/0005-rust-agent-host-and-wasm-plugins.md) and [ADR 0004](../adr/0004-rust-client-all-platforms.md). It is not a rewrite of EVE, and EVE is not a dependency or a model.
+This document says what v0.1 contains. It is scoped to Agent's existing feature set — chat with a live run ledger, the thought tree, workflows, sub-agents, settings — rebuilt on the stack in [ADR 0005](../adr/0005-rust-agent-host-and-wasm-plugins.md) and [ADR 0004](../adr/0004-rust-client-all-platforms.md). It is not a rewrite of EVE, and EVE is not a dependency or a model.
 
 ## The four layers
 
@@ -69,7 +69,7 @@ Each of these is a real product decision rather than a deferral, and each would 
 | `src/lib/server/transcription.ts`, `attachments.ts`, `model-*`, `provider-*`, `thought-tree.ts` | the Rust binary ([WF-IMP-019](tickets/WF-IMP-019-rust-agent-binary-and-model-layer.md), [WF-IMP-023](tickets/WF-IMP-023-agent-loop-sub-agents-and-builtins.md)) |
 | `src/lib/server/auth.ts` | **stays** — auth and sessions remain the host's |
 | `src/lib/components/kit/artifacts/` | **stays** — the browser-native artifact renderers |
-| `app-data/state/lexia.sqlite` | migrated to the Rust state directory |
+| `app-data/state/agent.sqlite` | migrated to the Rust state directory |
 
 Roughly 2,900 lines of agent TypeScript and 1,123 lines of tests move. The run coordinator's lease fencing and invariant tests are the part most likely to break silently in translation and are treated accordingly.
 
@@ -102,7 +102,7 @@ client        WF-IMP-012   URL and session bridge
 
 WF-IMP-008 and WF-IMP-021 are genuinely independent of the port and can run alongside it.
 
-The directory itself, the template and the tooling exist now — `lexosa-agent/`, `templates/agent/` and `scripts/agent.ts`. What is missing is the host side that reads them, which is `WF-IMP-026`, and it can be built as soon as `WF-IMP-019` exists.
+The directory itself, the template and the tooling exist now — `agents/default/`, `templates/agent/` and `scripts/agent.ts`. What is missing is the host side that reads them, which is `WF-IMP-026`, and it can be built as soon as `WF-IMP-019` exists.
 
 ## The open question this deliberately does not answer
 

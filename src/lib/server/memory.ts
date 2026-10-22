@@ -7,10 +7,10 @@ import { Database } from 'bun:sqlite';
 // index in the shared state database. Fact file paths are stored per row, so
 // the on-disk layout can follow EVE's authored structure (WF-INV-001) without a
 // migration. Same state database and module pattern as auth.ts and agents.ts.
-const stateDir = resolve(process.env.LEXIA_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
+const stateDir = resolve(process.env.AGENT_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
 const factsDir = join(stateDir, 'agent/memory/facts');
 const personalityPath = join(stateDir, 'agent/personality.md');
-const databasePath = join(stateDir, 'lexia.sqlite');
+const databasePath = join(stateDir, 'agent.sqlite');
 mkdirSync(dirname(databasePath), { recursive: true });
 
 const database = new Database(databasePath);
@@ -310,14 +310,14 @@ export function savePersonality(traits: string[]): string {
 		.map((trait) => trait.trim())
 		.filter((trait) => trait.length > 0)
 		.map((trait) => `- [${previous[trait] ?? stamp}] ${trait}`);
-	const file = ['# Lexosa personality', '', ...lines, ''].join('\n');
+	const file = ['# Agent personality', '', ...lines, ''].join('\n');
 	writeFileSync(personalityPath, file, 'utf8');
 	return file;
 }
 
-const REFLECTION_SYSTEM = `You maintain Lexosa's long-term memory. Reply with JSON only, no prose and no code fences:
-{"facts": [{"body": "one concise durable fact about the user or their world", "tags": ["comma","separated"]}], "traits": ["one personality trait Lexosa has observed"]}
-Rules: facts are durable (preferences, facts about the user's home, work, people), never transient chit-chat, never secrets; reuse the wording of an existing fact when you revise it; traits are short lowercase phrases describing how Lexosa should behave for this user.`;
+const REFLECTION_SYSTEM = `You maintain Agent's long-term memory. Reply with JSON only, no prose and no code fences:
+{"facts": [{"body": "one concise durable fact about the user or their world", "tags": ["comma","separated"]}], "traits": ["one personality trait Agent has observed"]}
+Rules: facts are durable (preferences, facts about the user's home, work, people), never transient chit-chat, never secrets; reuse the wording of an existing fact when you revise it; traits are short lowercase phrases describing how Agent should behave for this user.`;
 
 export type ReflectionResult = { facts: MemoryEntry[]; traits: string[]; file: string };
 

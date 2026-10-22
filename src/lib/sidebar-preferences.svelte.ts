@@ -24,8 +24,8 @@ export const SIDEBAR_SECTION_STARTS = [
 export const SIDEBAR_SECTION_IDS = ['sub-agents', 'settings'] as const;
 export type SidebarSectionId = (typeof SIDEBAR_SECTION_IDS)[number];
 
-const START_KEY = 'lexosa.sidebar.sectionStart';
-const OPEN_KEY = 'lexosa.sidebar.openSections';
+const START_KEY = 'agent.sidebar.sectionStart';
+const OPEN_KEY = 'agent.sidebar.openSections';
 
 // Storage is asked of the environment rather than through `$app/env`: this
 // module is instantiated from both the client and the server graph, and "is

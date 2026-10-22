@@ -18,15 +18,15 @@ dist/
 .output/
 .eve/
 
-# Local Lexosa state data
+# Local Agent state data
 app-data/
 
 # Agent runtime output. The structure of an agent directory is authored and
 # tracked; what the host writes into it is not. Recursive, because `subagents/`
 # holds one directory per standing sub-agent with the same shape.
-lexosa-agent/**/cache/*
-lexosa-agent/**/logs/*
-lexosa-agent/**/plugins/versions/*
+agents/default/**/cache/*
+agents/default/**/logs/*
+agents/default/**/plugins/versions/*
 !**/.gitkeep
 
 # Rust build output. The toolchain and the dependency lockfile are tracked; the

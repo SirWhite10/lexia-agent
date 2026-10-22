@@ -8,7 +8,7 @@
  *
  * An agent directory is data, not source: nothing in it is compiled, and the
  * host watches it so changes take effect without a rebuild. See
- * lexosa-agent/README.md for the structure and the watch contract, and ADR 0005
+ * agents/default/README.md for the structure and the watch contract, and ADR 0005
  * for why the tree exists separately from the binary.
  *
  * The template is committed as a reviewable tree at templates/agent/ rather than
@@ -244,7 +244,7 @@ function cmdNew(args: string[]): void {
 
 	const parentIndex = args.indexOf('--parent');
 	const parent =
-		parentIndex === -1 ? join(ROOT, 'lexosa-agent/subagents') : resolve(ROOT, args[parentIndex + 1] ?? '');
+		parentIndex === -1 ? join(ROOT, 'agents/default/subagents') : resolve(ROOT, args[parentIndex + 1] ?? '');
 	const target = join(parent, name);
 
 	if (statSync(target, { throwIfNoEntry: false })) {

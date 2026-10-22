@@ -40,7 +40,7 @@
 	let {
 		value = '',
 		catalog,
-		placeholder = 'Tell Lexia to do something…',
+		placeholder = 'Tell Agent to do something…',
 		disabled = false,
 		onsend,
 		onchange,
@@ -258,7 +258,7 @@
 		{placeholder}
 		{disabled}
 		rows="1"
-		aria-label="Message Lexia. Type / for tools, $ for skills, # for files, ^ for memory, @ for agents."
+		aria-label="Message Agent. Type / for tools, $ for skills, # for files, ^ for memory, @ for agents."
 		onscroll={sync}
 		onclick={sync}
 		onkeyup={sync}

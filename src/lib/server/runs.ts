@@ -3,14 +3,14 @@ import { dirname, join, resolve } from 'node:path';
 import { Database } from 'bun:sqlite';
 
 // Durable run/action state and the append-only per-run event log (WF-IMP-001,
-// ADR 0002). The stable Lexosa host owns lifecycle, scheduling, recovery, and
+// ADR 0002). The stable Agent host owns lifecycle, scheduling, recovery, and
 // progress publication; EVE executes assigned actions under renewable leases.
 // Every state transition commits atomically with its replay event, and parent
 // run status is a derived projection over child action states, never a second
 // independently mutable truth. Same state database and module pattern as
 // auth.ts, agents.ts, and memory.ts (own connection per module).
-const stateDir = resolve(process.env.LEXIA_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
-const databasePath = join(stateDir, 'lexia.sqlite');
+const stateDir = resolve(process.env.AGENT_STATE_DIR ?? join(process.cwd(), 'app-data/state'));
+const databasePath = join(stateDir, 'agent.sqlite');
 mkdirSync(dirname(databasePath), { recursive: true });
 
 const database = new Database(databasePath);
