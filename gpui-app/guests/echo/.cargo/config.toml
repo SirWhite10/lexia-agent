@@ -1,0 +1,10 @@
+# A core wasm module declares its imports at link time. `--import-undefined`
+# turns the guest's `extern "C"` block into a real wasm import rather than an
+# unresolved symbol.
+#
+# This does not weaken the sandbox: the guest may *declare* any import it likes,
+# and Wasmtime refuses to instantiate unless the host linked that exact name.
+# The capability grant is enforced by which imports exist, not by what the guest
+# is allowed to say.
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "link-arg=--import-undefined"]

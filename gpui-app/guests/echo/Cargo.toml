@@ -1,0 +1,14 @@
+# A real plugin, built to wasm32-unknown-unknown. Proves the ABI is a boundary
+# rather than a Rust-shaped interface: everything below crosses it as UTF-8 in
+# linear memory, with no shared types and no imports beyond the ones it was
+# granted.
+[package]
+name = "lexosa-plugin-echo"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[workspace]

@@ -1,0 +1,16 @@
+name = "echo"
+version = "0.1.0"
+
+# A list of names from the closed capability enum, not a table of booleans.
+# A boolean table cannot express "not mentioned", which is not the same as
+# "denied", and it is why the manifest takes a list.
+capabilities = ["log"]
+
+# Deliberately not requested: filesystem_read, filesystem_write, shell, http_*.
+# The guest has no import for them, so calling one would fail to instantiate
+# rather than fail at the call.
+
+[resources]
+memory_mb = 16
+fuel = 50000000
+timeout_ms = 2000

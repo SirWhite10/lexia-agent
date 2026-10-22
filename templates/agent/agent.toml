@@ -1,0 +1,149 @@
+# Agent manifest — read by the agent host on start and re-read on change.
+#
+# This file is data. Nothing here is compiled, and a change takes effect without
+# rebuilding the host. If a field ever needs a rebuild to apply, it belongs in
+# the host instead.
+#
+# The `{{...}}` values are substituted when the directory is created.
+# `bun scripts/agent.ts check` rejects a directory where one was left in place.
+#
+# Structure is hybrid: what grows one-file-per-thing is a directory
+# (instructions/, memory/facts/, skills/, subagents/, workspace/); what stays a
+# single record is a section here rather than a file in a folder of one.
+
+[agent]
+# `name` is the identity used in the run ledger, in action attribution, and as
+# the directory name. It is a slug: lowercase, single dashes, no spaces.
+name = "{{AGENT_NAME}}"
+title = "{{AGENT_TITLE}}"
+description = "{{AGENT_DESCRIPTION}}"
+
+[prompt]
+# Instruction fragments, composed in order into the system prompt. Everything
+# above the memory block must stay byte-stable across turns so the prompt-cache
+# prefix re-warms once per change rather than once per turn — see ADR 0002 and
+# WF-IMP-022. Adding a fragment changes that prefix, which re-warms it once.
+instructions = ["instructions/core.md"]
+
+[memory]
+# "all" for the main agent, which retrieves across the whole corpus. A
+# sub-agent names its role instead, so it retrieves role-scoped memory only and
+# never the main agent's private context.
+scope = "{{AGENT_NAME}}"
+
+# Facts are human-editable markdown under `memory/facts/`. The vector index is
+# host-owned and rebuilt from those files; it is not edited here.
+facts = "memory/facts"
+
+[skills]
+# Directories searched for skills. A skill declares the capability it needs; the
+# capability is a builtin or a plugin.
+paths = ["skills"]
+
+[capabilities]
+# What this agent may invoke, by name from the registry WF-IMP-023 defines. This
+# is a grant envelope, not a declaration: the host validates every name against
+# the registry and refuses one it does not know, rather than narrowing the list to
+# what happens to exist.
+#
+# The canonical vocabulary names the action, not the implementation:
+#   chat.reply · note.write · subagent.spawn · file.read · artifact.write · memory.write
+allow = ["chat.reply"]
+
+# Deny wins over allow, so a narrow exception is expressible without editing
+# every entry above it.
+deny = []
+
+# Capabilities that must be present for this agent to run at all. A missing
+# required capability is a startup failure, not a degraded mode: an agent that
+# silently cannot do its job is worse than one that refuses to start.
+#
+# Leave this empty until the registry exists. A required capability is a startup
+# gate, so naming one that nothing provides makes the directory unloadable.
+require = []
+
+[plugins]
+# Plugins this agent expects. A missing one is resolved at run time through the
+# load-or-create path, not at startup — an agent may legitimately reach for a
+# capability it does not have yet.
+#
+# This is what the agent *expects*. What a plugin is actually *granted* is a
+# separate consent record the operator makes; nothing here grants anything.
+require = []
+
+[subagents]
+# Directory of standing sub-agents, relative to this agent's directory. Each is
+# one directory with its own manifest and instructions.
+directory = "subagents"
+
+[sandbox]
+# The filesystem root this agent may reach. Anything outside it is refused by
+# the host, not by convention.
+workspace = "workspace"
+
+# "restricted" | "standard" | "full". This is the floor for this agent; the
+# host may hold it higher, never lower.
+profile = "standard"
+
+# --------------------------------------------------------------------------
+# Provider and model configuration.
+#
+# These sections belong to the MAIN agent only. Credentials are installation
+# state, not agent state: one credential per provider, held once and inherited by
+# every sub-agent. A sub-agent manifest carries no [[providers]] and no
+# [[use_cases]] — duplicating them would put the same credential list in every
+# directory and give each agent its own copy of a secret it does not need.
+# --------------------------------------------------------------------------
+
+# One credential per provider. The credential itself is not here: it lives at
+# `<state-dir>/<provider>.key`, owner-readable, and this section records which
+# providers exist.
+#
+# Precedence, carried over unchanged from the TypeScript host: <PROVIDER>_API_KEY
+# in the process environment outranks the stored file for the life of the
+# process, so a shell configuration is never silently overridden from a browser.
+# Removing an entry removes the stored key.
+#
+# id          — stable identifier, used by model ids below and by grants
+# type        — "openai-compatible" | "anthropic" | "local"
+# endpoint    — base URL for the provider's API
+# modalities  — what it serves; drives whether a use-case takes a catalogued
+#               model or a typed id
+# key_file    — filename under the state directory, never the key itself
+
+[[providers]]
+id = "openrouter"
+type = "openai-compatible"
+endpoint = "https://openrouter.ai/api/v1"
+modalities = ["text", "embeddings", "audio"]
+key_file = "openrouter.key"
+
+# Use-case → model mapping. A use-case is a logical class of work — always,
+# quick, research, heavy — not a vendor's model id. Catalogues are fetched per
+# provider and only when a key exists, so an unconfigured provider contributes
+# nothing rather than failing the load.
+#
+# A row whose provider has no key is inert: the host falls back to `always` and
+# says so, rather than failing the turn. Anything not listed falls through to
+# `always`, so a dispatch is never unroutable.
+
+[[use_cases]]
+id = "always"
+title = "Always"
+description = "The everyday path. Chosen for latency and cost over cleverness."
+model = "openrouter/inclusionai/ling-3.0-flash-sante:free"
+
+[[use_cases]]
+id = "transcription"
+title = "Transcription"
+description = "Audio turns. Seeded because a turn carrying audio otherwise has nowhere to go."
+# OpenRouter's catalogue is text-only, so this row takes a typed id rather than
+# a picker. It runs after a turn that carried audio.
+model = "openrouter/openai/whisper-large-v3"
+
+# A model the host must treat as unlisted because its provider's catalogue omits
+# it. `context_window` is required in that case: the host uses the value verbatim
+# rather than refusing to compile compaction for a model it cannot size.
+[[model_overrides]]
+model = "inclusionai/ling-3.0-flash-sante:free"
+context_window = 128000

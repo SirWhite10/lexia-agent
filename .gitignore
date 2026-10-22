@@ -21,6 +21,19 @@ dist/
 # Local Lexosa state data
 app-data/
 
+# Agent runtime output. The structure of an agent directory is authored and
+# tracked; what the host writes into it is not. Recursive, because `subagents/`
+# holds one directory per standing sub-agent with the same shape.
+lexosa-agent/**/cache/*
+lexosa-agent/**/logs/*
+lexosa-agent/**/plugins/versions/*
+!**/.gitkeep
+
+# Rust build output. The toolchain and the dependency lockfile are tracked; the
+# artefacts are not.
+gpui-app/target/
+gpui-app/guests/*/target/
+
 # OS
 .DS_Store
 Thumbs.db

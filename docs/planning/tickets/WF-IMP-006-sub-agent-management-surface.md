@@ -44,6 +44,6 @@ All acceptance criteria are implemented and verified in the running app.
 - **Agent-task history** now reads one-shot delegations from the run model added by [WF-IMP-001](WF-IMP-001-durable-intent-run-vertical-slice.md), with lifecycle status and outcome per task.
 - **The chat surface exists**: a turn becomes a run, and the delegation entry streams action-level progress over SSE. The capture half of the loop is live — every user message lands in the memory log on send.
 
-The retrieve-and-inject half still runs through injected fakes in `bun test` rather than a live provider: no `OPENROUTER_API_KEY` is configured on this host, so the embedding and reflection call shapes are covered by tests, not a real round-trip. That needs a key, not more code.
-
 **Update — provider gap closed.** `OPENROUTER_API_KEY` is configured in `.env`; embeddings and chat completions were exercised against the live OpenRouter API, so the capture → retrieve loop is verified against the real provider, not only fakes.
+
+**Correction.** An earlier update in this section recorded the provider gap as closed on the strength of `OPENROUTER_API_KEY` being configured in `.env`. On this host there is no `.env` and the variable is unset. `.env` is gitignored, so it was never in the tree either — the earlier claim described a local file that no longer exists. The live verification it describes did happen; it just cannot be repeated here without a key, and this note should not be read as saying otherwise.

@@ -27,10 +27,10 @@ the port.
 
 ## Status
 
-**Web is alpha** ([WF-DEC-003](../../docs/planning/tickets/WF-DEC-003-gpui-kit-forefront-web-alpha.md)).
+**Web is alpha** ([WF-DEC-003](../../../../docs/planning/tickets/WF-DEC-003-gpui-kit-forefront-web-alpha.md)).
 The theme transcription and the component layer below are real and load-bearing;
 the browser renderer for the actual crate is not yet established, and
-[WF-INV-002](../../docs/planning/tickets/WF-INV-002-gpui-kit-web-renderer-reality.md)
+[WF-INV-002](../../../../docs/planning/tickets/WF-INV-002-gpui-kit-web-renderer-reality.md)
 exists to settle that before anything here is treated as a shipping surface.
 
 This directory stays in the tree as the reference implementation and the parity

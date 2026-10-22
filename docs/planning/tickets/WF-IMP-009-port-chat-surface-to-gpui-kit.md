@@ -11,7 +11,8 @@ Recreate the conversation surface in gpui-kit so the browser build carries the r
 
 ## Depends on
 
-- [WF-IMP-008](WF-IMP-008-gpui-kit-web-build-and-host.md)
+- [WF-IMP-012](WF-IMP-012-url-and-session-bridge.md) for routing and the session contract
+- [WF-IMP-013](WF-IMP-013-port-app-shell-to-gpui-kit.md) for the container this renders inside
 
 ## Reference behaviour
 
@@ -35,11 +36,13 @@ Three places where the reference implementation uses the browser in ways GPUI Ki
 - **Overlays.** The Svelte surface uses the platform `<dialog>` for modal focus, inertness and Escape. The port uses `window.open_dialog` / `window.open_sheet` with `FocusTrapElement` and verifies focus returns to the trigger — that behaviour is the point of those APIs.
 - **Data source.** The reference simulates the run stream locally from `src/lib/components/kit/demo/transcript.ts`. The gpui-kit surface must read the real SSE endpoint the production chat uses, with the harness toggles retained as an alpha-only affordance for review.
 - **Layout.** Preserve the three-size behaviour: single column with a sheet below `md`, a rail from `md`, a wider sidebar at `xl`, and no horizontal page overflow at 360px.
+- Both targets are built from this one view code ([WF-DEC-004](WF-DEC-004-one-rust-codebase-native-and-web.md)); a `cfg(target_family = "wasm")` in the surface is a finding, not a pattern.
 
 ## Out of scope
 
 - The composer context model ([WF-IMP-011](WF-IMP-011-composer-context-model-and-voice.md)).
 - Artifacts ([WF-IMP-010](WF-IMP-010-port-artifact-surface-to-gpui-kit.md)).
+- Attachments ([WF-IMP-014](WF-IMP-014-attachment-and-file-picker-bridge.md)).
 - Removing the Svelte surface.
 
 ## Acceptance criteria

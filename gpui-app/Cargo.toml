@@ -1,0 +1,50 @@
+[package]
+name = "lexosa-agent"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+description = "The Lexosa agent host: a permanent Rust runtime for one self-extensible agent."
+license = "Apache-2.0"
+publish = false
+
+# One crate, two distributions (ADR 0004, ADR 0005). The `cdylib` is the browser
+# client; the binary is the agent host and, later, the native window. Shared code
+# lives in `lib`, so a module written once is present in both.
+[lib]
+name = "lexosa_agent"
+path = "src/lib.rs"
+crate-type = ["rlib", "cdylib"]
+
+[[bin]]
+name = "lexosa"
+path = "src/main.rs"
+
+[dependencies]
+async-trait = "0.1"
+base64 = "0.22"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+rusqlite = { version = "0.37", features = ["bundled"] }
+uuid = { version = "1", features = ["v4"] }
+sha2 = "0.10"
+wasmtime = { version = "49", default-features = false, features = ["cranelift", "runtime", "std"] }
+async-stream = "0.3"
+anyhow = "1"
+axum = { version = "0.8", features = ["json", "tokio", "http1"] }
+clap = { version = "4", features = ["derive", "env"] }
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls", "charset", "http2", "blocking"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "fs", "net", "time"] }
+toml = "0.9"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[profile.release]
+# The client bundle is the size-sensitive target; LTO and `opt-level = "s"` are
+# chosen for it, and the agent host inherits them because it is the same crate.
+lto = true
+opt-level = "s"
+codegen-units = 1
+strip = true

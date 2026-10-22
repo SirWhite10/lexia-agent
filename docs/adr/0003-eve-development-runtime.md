@@ -1,6 +1,6 @@
 ---
-status: accepted
-supersedes: 0001
+status: superseded
+superseded_by: 0005
 ---
 
 # Run EVE from source in development mode only

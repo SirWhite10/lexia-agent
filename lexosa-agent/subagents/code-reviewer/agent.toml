@@ -1,0 +1,59 @@
+# Code Reviewer — a standing sub-agent, created from templates/agent/.
+#
+# This is the worked example the template ships with: a real agent with a real
+# grant, not a filled-in placeholder. Compare it against templates/agent/ to
+# see what `bun scripts/agent.ts new` produced, and what still had to be decided.
+
+[agent]
+name = "code-reviewer"
+title = "Code Reviewer"
+description = "Reads a change and reports what is wrong with it, ranked by how much it matters."
+
+[prompt]
+instructions = ["instructions/core.md"]
+
+[memory]
+# Its own scope, never "all". A sub-agent that could retrieve the main agent's
+# context would not be delegating anything — it would be a second main agent
+# with the same reach and none of the context.
+scope = "code-reviewer"
+
+facts = "memory/facts"
+
+[skills]
+paths = ["skills"]
+
+[capabilities]
+# Read-only by design. This agent reports; it does not edit, commit or push.
+# A reviewer that can change the code is no longer a reviewer, because the
+# finding and the fix stop being separable.
+#
+# Names come from the registry WF-IMP-023 defines. `shell.exec` and `fs.write`
+# are not in today's vocabulary; they are listed in `deny` because the intent is
+# worth recording before the registry settles, not because they resolve today.
+allow = ["file.read"]
+
+deny = ["shell.exec", "fs.write"]
+
+# Deliberately empty, and kept present rather than omitted so the reason sits
+# next to the key it explains. `require` is a startup gate — a missing required
+# capability refuses to start — and the registry does not exist yet. Until it
+# does, this directory is a valid, loadable agent that cannot yet be granted
+# everything it asks for. `require` must not make it unloadable.
+require = []
+
+[plugins]
+require = []
+
+[subagents]
+directory = "subagents"
+
+[sandbox]
+workspace = "workspace"
+profile = "restricted"
+
+# No [[providers]] and no [[use_cases]] here, and that is deliberate. Provider
+# credentials and the model mapping are installation state held once in the main
+# agent's manifest and inherited. A sub-agent carrying its own copy would put the
+# same credential list in every directory and give each agent a secret it does
+# not need.

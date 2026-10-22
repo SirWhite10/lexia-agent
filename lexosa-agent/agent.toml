@@ -1,0 +1,144 @@
+# The main agent. Read by the agent host at start and re-read on change.
+#
+# This file is data. Nothing here is compiled, and a change takes effect without
+# rebuilding the host. If a field ever needs a rebuild to apply, it belongs in
+# the host instead.
+#
+# Structure is hybrid: what grows one-file-per-thing is a directory
+# (instructions/, memory/facts/, skills/, subagents/, workspace/); what stays a
+# single record is a section here rather than a file in a folder of one.
+
+[agent]
+# `name` is the identity used in the run ledger and in action attribution.
+name = "lexosa"
+title = "Lexosa"
+description = "The main agent. One massive conversation that grows for the life of the installation."
+
+[prompt]
+# Instruction fragments, composed in order into the system prompt. Everything
+# above the memory block must stay byte-stable across turns so the prompt-cache
+# prefix re-warms once per change rather than once per turn — see ADR 0002 and
+# WF-IMP-022. Adding a fragment changes that prefix, which re-warms it once.
+instructions = ["instructions/core.md"]
+
+[memory]
+# The main agent retrieves across the whole corpus. A sub-agent names its own
+# scope instead and never inherits this one.
+scope = "all"
+
+# Facts are human-editable markdown under `memory/facts/`. The vector index is
+# host-owned and rebuilt from those files; it is not edited here.
+facts = "memory/facts"
+
+[skills]
+paths = ["skills"]
+
+[capabilities]
+# What this agent may invoke, by name from the registry WF-IMP-023 defines. The
+# host validates every name against that registry and refuses one it does not
+# know, rather than narrowing the list to what happens to exist.
+#
+# The canonical vocabulary names the action, not the implementation — which is
+# why this differs from the names the retired runner used (`chat.ack`,
+# `subagent.delegate`) and matches the ones the composer already offered.
+#   chat.reply · note.write · subagent.spawn · file.read · artifact.write · memory.write
+allow = ["chat.reply", "note.write", "subagent.spawn", "file.read", "artifact.write", "memory.write"]
+
+# Deny wins over allow, so a narrow exception is expressible without editing
+# every entry above it.
+deny = []
+
+# Empty on purpose. A required capability is a startup gate, and naming one that
+# nothing provides would make the default agent unloadable.
+require = []
+
+[plugins]
+# What this agent expects. What a plugin is actually granted is a separate
+# consent record the operator makes — nothing here grants anything.
+require = []
+
+[subagents]
+directory = "subagents"
+
+[sandbox]
+workspace = "workspace"
+profile = "standard"
+
+# --------------------------------------------------------------------------
+# Provider and model configuration.
+#
+# These sections belong to the MAIN agent only. Credentials are installation
+# state, not agent state: one credential per provider, held once here and
+# inherited by every sub-agent. A sub-agent manifest carries neither
+# [[providers]] nor [[use_cases]] — duplicating them would put the same
+# credential list in every directory.
+# --------------------------------------------------------------------------
+
+# The credential is not here: it lives at `<state-dir>/<provider>.key`,
+# owner-readable, and this section records which providers exist.
+#
+# Precedence, carried over unchanged from the TypeScript host: <PROVIDER>_API_KEY
+# in the process environment outranks the stored file for the life of the
+# process, so a shell configuration is never silently overridden from a browser.
+# Removing an entry removes the stored key.
+#
+# id          — stable identifier, used by model ids below and by grants
+# type        — "openai-compatible" | "anthropic" | "local"
+# endpoint    — base URL for the provider's API
+# modalities  — what it serves; drives whether a use-case takes a catalogued
+#               model or a typed id
+# key_file    — filename under the state directory, never the key itself
+
+[[providers]]
+id = "openrouter"
+type = "openai-compatible"
+endpoint = "https://openrouter.ai/api/v1"
+modalities = ["text", "embeddings", "audio"]
+key_file = "openrouter.key"
+
+# Use-case → model mapping. A use-case is a logical class of work, not a vendor's
+# model id. Catalogues are fetched per provider and only when a key exists, so an
+# unconfigured provider contributes nothing rather than failing the load.
+#
+# A row whose provider has no key is inert: the host falls back to `always` and
+# says so, rather than failing the turn. Anything unlisted falls through to
+# `always`, so a dispatch is never unroutable. An operator may add use-cases.
+
+[[use_cases]]
+id = "always"
+title = "Always"
+description = "The everyday path. Chosen for latency and cost over cleverness."
+model = "openrouter/inclusionai/ling-3.0-flash-sante:free"
+
+[[use_cases]]
+id = "quick"
+title = "Quick answers"
+description = "Short factual replies where a wrong answer is cheap to catch."
+model = "openrouter/inclusionai/ling-3.0-flash-sante:free"
+
+[[use_cases]]
+id = "research"
+title = "Research and search"
+description = "Multi-step work where sources have to be gathered and cross-checked."
+model = "openrouter/anthropic/claude-sonnet-4.5"
+
+[[use_cases]]
+id = "heavy"
+title = "Heavy work"
+description = "Long reasoning. Expensive and slow by choice."
+model = "openrouter/anthropic/claude-opus-4.1"
+
+[[use_cases]]
+id = "transcription"
+title = "Transcription"
+description = "Audio turns. Seeded by default because a turn carrying audio otherwise has nowhere to go."
+# OpenRouter's catalogue is text-only, so this row takes a typed id rather than
+# a picker. It runs after a turn that carried audio.
+model = "openrouter/openai/whisper-large-v3"
+
+# A model the host must treat as unlisted because its provider's catalogue omits
+# it. `context_window` is required in that case: the host uses the value verbatim
+# rather than refusing to compile compaction for a model it cannot size.
+[[model_overrides]]
+model = "inclusionai/ling-3.0-flash-sante:free"
+context_window = 128000

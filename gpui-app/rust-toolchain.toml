@@ -1,0 +1,20 @@
+# Nightly, and not by preference.
+#
+# The browser target pulls in `wasm_thread`, which opens with
+# `#![feature(stdarch_wasm_atomic_wait)]` — a stable-forbidden feature.
+# `gpui-kit` depends on `gpui_web` without `default-features = false`, so its
+# `multithreaded` default is always on, and Cargo feature unification means a
+# consumer cannot turn it off. The nightly requirement is therefore permanent and
+# applies to the whole crate, including the native agent host, because the toolchain
+# is chosen per directory rather than per target.
+#
+# Pinned to an exact nightly so a toolchain bump is a deliberate act with a diff,
+# not something that happens when someone runs `cargo build`. An older pin
+# (2026-03-04) was too old for the current dependency tree; the browser target's
+# requirement is unchanged, so this is a bump and not a change of policy. See
+# docs/planning/tickets/WF-IMP-008-gpui-kit-web-build-and-host.md.
+
+[toolchain]
+channel = "nightly-2026-10-04"
+components = ["rustfmt", "clippy"]
+targets = ["wasm32-unknown-unknown"]
