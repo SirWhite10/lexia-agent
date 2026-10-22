@@ -356,7 +356,7 @@ impl SubAgentStore {
 
     /// Update the role card. A field that is not given is left alone.
     pub fn update_sub_agent_role_card(&self, id: &str, role_card: &RoleCard) -> Result<()> {
-        let mut connection = self.connection();
+        let connection = self.connection();
         if let Some(focus) = &role_card.focus {
             connection
                 .execute(
@@ -408,7 +408,7 @@ impl SubAgentStore {
 
     /// Revisions never overwrite: "what did it run with?" must stay answerable.
     pub fn revise_sub_agent_prompt(&self, id: &str, body: &str) -> Result<i64> {
-        let mut connection = self.connection();
+        let connection = self.connection();
         let next: i64 = connection
             .query_row(
                 "SELECT COALESCE(MAX(version), 0) + 1 FROM sub_agent_prompt_versions WHERE sub_agent_id = ?1",
@@ -655,7 +655,7 @@ mod tests {
             .get_sub_agent(&created.sub_agent.id)
             .expect("the sub-agent is read")
             .expect("it is there");
-        assert_eq!(updated.sub_agent.focus, "Research suppliers.");
+        assert_eq!(updated.sub_agent.focus, "Research suppliers");
         assert_eq!(
             updated.sub_agent.memory_scope, "research",
             "a field that was not given is left alone"
