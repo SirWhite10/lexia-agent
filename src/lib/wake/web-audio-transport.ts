@@ -4,7 +4,7 @@ import type {
   ReadyEvent,
   ServerAudioEvent,
   TransportEvent
-} from './types';
+} from './types.js';
 
 const MAX_FRAME_BYTES = 64 * 1024;
 const MAX_QUEUE_MS = 250;
@@ -85,15 +85,22 @@ function parseAudioEvent(value: unknown): ServerAudioEvent | null {
 }
 
 export class WebSocketAudioTransport implements AudioTransport {
+  /**
+   * @param url The wake service's socket endpoint. It is not the page's own
+   *   origin: the detector runs in a separate service, and the host only
+   *   serves the page. A relative URL is resolved against the page's origin.
+   */
+  constructor(private readonly url: string) {}
+
   private socket: WebSocket | null = null;
   private config: AudioStreamConfig | null = null;
   private ready = false;
   private stopping = false;
   private stopSent = false;
-  private flushTimer: number | null = null;
+  private flushTimer: ReturnType<typeof setTimeout> | null = null;
   private queue: QueuedFrame[] = [];
-  private connectTimer: number | null = null;
-  private negotiationTimer: number | null = null;
+  private connectTimer: ReturnType<typeof setTimeout> | null = null;
+  private negotiationTimer: ReturnType<typeof setTimeout> | null = null;
   private queuedDurationMs = 0;
   private readonly listeners = new Set<(event: TransportEvent) => void>();
 
@@ -102,7 +109,8 @@ export class WebSocketAudioTransport implements AudioTransport {
     if (typeof WebSocket === 'undefined') return Promise.reject(new Error('This browser does not provide WebSocket.'));
 
     const scheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const socket = new WebSocket(`${scheme}//${location.host}/ws/audio`);
+    const endpoint = this.url.startsWith('/') ? `${scheme}//${location.host}${this.url}` : this.url;
+    const socket = new WebSocket(endpoint);
     socket.binaryType = 'arraybuffer';
     this.socket = socket;
     this.stopping = false;

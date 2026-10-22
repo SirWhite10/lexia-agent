@@ -1,10 +1,18 @@
 import { getSession } from './auth';
+import { verifyHostToken } from './host-token';
 import { fixtureFor } from './fixtures';
 import { DetectorWorker } from './worker';
 
 export async function fixtureEndpoint(request: Request, worker: DetectorWorker): Promise<Response> {
 	if (request.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: { Allow: 'POST' } });
-	if (!getSession(request)) return Response.json({ error: 'unauthorized', message: 'Sign in before running the WAV fixture.' }, { status: 401 });
+	// Either the service's own session, or a token the agent host signed. The
+	// host's page holds the host's session, and the host's cookie never
+	// reaches this process, so the token is how the host's page runs the
+	// fixture.
+	const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? null;
+	if (!getSession(request) && !verifyHostToken(bearer)) {
+		return Response.json({ error: 'unauthorized', message: 'Sign in before running the WAV fixture.' }, { status: 401 });
+	}
 	if (!worker.isReady()) return Response.json({ error: 'model_unavailable', message: 'The detector model is not ready.' }, { status: 503 });
 	let fixtureId = 'agent-wake';
 	try {

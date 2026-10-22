@@ -5,10 +5,8 @@
 	"scripts": {
 		"serve": "PORT=8787 bun run serve.ts",
 		"serve:env": "bun run serve.ts",
-		"build:web": "bun run --cwd web build",
-		"check:web": "bun run --cwd web check",
 		"build:worker": "cargo build --release --bin agent-wake-worker",
 		"test:host": "bun test server",
-		"check": "cargo test --all-targets && bun test server && bun run check:web"
+		"check": "cargo test --all-targets && bun test server"
 	}
 }

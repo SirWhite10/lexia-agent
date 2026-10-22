@@ -1,4 +1,4 @@
-import type { StableFailureCode } from '$lib/audio/types';
+import type { StableFailureCode } from './types.js';
 
 const labels: Record<StableFailureCode, string> = {
   permission: 'Microphone permission',

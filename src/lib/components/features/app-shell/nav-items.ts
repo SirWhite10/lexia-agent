@@ -1,4 +1,5 @@
 import MessageSquareIcon from '@lucide/svelte/icons/message-square';
+import MicIcon from '@lucide/svelte/icons/mic';
 import SettingsIcon from '@lucide/svelte/icons/settings';
 import WorkflowIcon from '@lucide/svelte/icons/workflow';
 import type { Component } from 'svelte';
@@ -22,6 +23,8 @@ export type SectionItem = {
 /** Top-level destinations; mirrored in the mobile tab bar. */
 export const chatItem: NavItem = { title: 'Chat', href: '/', icon: MessageSquareIcon };
 export const workflowsItem: NavItem = { title: 'Workflows', href: '/workflows', icon: WorkflowIcon };
+/** The wake lab: microphone capture and wake detection for this agent. */
+export const wakeItem: NavItem = { title: 'Wake word', href: '/wake', icon: MicIcon };
 export const settingsItem: NavItem = {
 	title: 'Settings',
 	href: '/settings/general',
@@ -38,7 +41,7 @@ export const settingsItems: SectionItem[] = [
 	{ title: 'Thinking', href: '/thinking' }
 ];
 
-export const primaryNav: NavItem[] = [chatItem, workflowsItem, settingsItem];
+export const primaryNav: NavItem[] = [chatItem, workflowsItem, wakeItem, settingsItem];
 
 /** Which entry is highlighted. The whole item is passed rather than a bare
  * href: the Settings tab and the General sub-page have the same href, so only
@@ -55,6 +58,7 @@ export function titleForPath(pathname: string, subAgents: SubAgent[]): string {
 	if (pathname === '/') return 'Chat';
 	if (pathname.startsWith('/workflows')) return 'Workflows';
 	if (pathname.startsWith('/thinking')) return 'Thinking';
+	if (pathname.startsWith('/wake')) return 'Wake word';
 	if (pathname === '/agents') return 'Sub-agents';
 	if (pathname.startsWith('/agents/')) {
 		const id = pathname.slice('/agents/'.length);

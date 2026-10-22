@@ -65,6 +65,9 @@ export interface StatsEvent {
 export interface WakeEvent {
   type: 'wake';
   keyword?: string;
+  /** The command the agent's phrase declares. Absent or null when the agent
+   * does not answer to that phrase, in which case nothing ran. */
+  command?: string | null;
   score?: number;
   threshold?: number;
   timestamp?: string | number;

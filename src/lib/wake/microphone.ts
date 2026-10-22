@@ -2,7 +2,7 @@
 // emitted as a real .js asset. A bare `?url` import ships the raw .ts source under a
 // `data:video/mp2t` MIME type, which audioWorklet.addModule() always rejects.
 import workletUrl from './capture-worklet.ts?worker&url';
-import type { CaptureFrame, CaptureInfo } from './types';
+import type { CaptureFrame, CaptureInfo } from './types.js';
 
 interface CaptureCallbacks {
   onFrame(frame: CaptureFrame): void;

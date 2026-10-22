@@ -1,3 +1,4 @@
+import { verifyHostToken } from './host-token';
 import { commandForKeyword } from './agent-phrases';
 import { getSession } from './auth';
 import { DetectorWorker } from './worker';
@@ -209,9 +210,15 @@ export function createWebSocketHandler({ worker }: WSServerOptions) {
 			const url = new URL(request.url);
 			if (url.pathname !== '/ws/audio') return undefined;
 			if (!isAllowedOrigin(request.headers.get('origin'), configuredOrigins())) return new Response(JSON.stringify(audioError('origin_forbidden', 'Origin is not allowed.')), { status: 403, headers: { 'content-type': 'application/json' } });
+			// Two ways in. The service's own session cookie, for a client that
+			// logged in here; or a token the agent host signed, for the host's
+			// own page. The host's cookie is scoped to the host's origin and
+			// never reaches this process, so the token is how the page connects.
 			const session = getSession(request);
-			if (!session) return new Response(JSON.stringify(audioError('unauthorized', 'Sign in before opening an audio stream.')), { status: 401, headers: { 'content-type': 'application/json' } });
-			const upgraded = server.upgrade(request, { data: newSocketData(session.username) });
+			const hostUser = session ? null : verifyHostToken(url.searchParams.get('token'));
+			if (!session && !hostUser) return new Response(JSON.stringify(audioError('unauthorized', 'Sign in before opening an audio stream.')), { status: 401, headers: { 'content-type': 'application/json' } });
+			const identity = session?.username ?? hostUser!.id;
+			const upgraded = server.upgrade(request, { data: newSocketData(identity) });
 			return upgraded ? undefined : new Response(JSON.stringify(audioError('upgrade_failed', 'WebSocket upgrade failed.')), { status: 400, headers: { 'content-type': 'application/json' } });
 		}
 	};

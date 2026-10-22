@@ -2,7 +2,6 @@ import { fetchAgentPhrases, setCurrentPhrases, spellPhrases } from './server/age
 import { authConfigured, getSession, login, logout, requireSession, session } from './server/auth';
 import { fixtureEndpoint } from './server/fixture';
 import { keywordEndpoint } from './server/keyword-endpoint';
-import { staticWebResponse } from './server/static';
 import { createWebSocketHandler } from './server/wss';
 import { DetectorWorker } from './server/worker';
 
@@ -32,8 +31,12 @@ const server = Bun.serve({
 		// The project ZIP is not carried in this repository, so there is no
 		// route for it. A route that answers 404 for a file that is deliberately
 		// absent is a route that looks like it works and does not.
-		const webResponse = await staticWebResponse(request);
-		if (webResponse) return webResponse;
+		// The browser interface for the wake lab lives in the agent host now,
+		// which is where the signed-in user is. This service answers the
+		// detector's endpoints and nothing else.
+		if (url.pathname === '/') {
+			return Response.json({ ok: true, service: 'agent-wake', websocket: '/ws/audio' });
+		}
 		return new Response('Not found', { status: 404 });
 	},
 	websocket
