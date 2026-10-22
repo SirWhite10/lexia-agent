@@ -357,7 +357,6 @@ mod tests {
     async fn a_capability_the_host_cannot_run_is_left_queued() {
         let scratch = Scratch::new("skipped");
         let coordinator = scratch.coordinator();
-        let sub_agents = scratch.sub_agents();
         let run = coordinator
             .create_run(NewRun {
                 title: "a turn".into(),
