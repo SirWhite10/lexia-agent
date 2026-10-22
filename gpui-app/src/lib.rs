@@ -18,6 +18,7 @@
 //! nothing about HTTP, and nothing in the crate builds a vendor's request shape
 //! by hand outside [`models`].
 
+pub mod agent_loop;
 pub mod audio;
 pub mod builtins;
 pub mod config;
