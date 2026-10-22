@@ -19,6 +19,7 @@
 //! by hand outside [`models`].
 
 pub mod audio;
+pub mod builtins;
 pub mod config;
 pub mod credentials;
 pub mod error;
